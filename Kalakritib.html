@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Swadeshi</title>
+    <link rel="stylesheet" href="">
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome for icons -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Playfair+Display:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #8b5a2b;
+            --accent-color: #d4af37;
+            --secondary-color: #4c6f5c;
+            --light-color: #f8f3e9;
+            --dark-color: #3c2f28;
+        }
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: var(--light-color);
+            color: var(--dark-color);
+            scroll-behavior: smooth;
+        }
+        h1, h2, h3, h4, h5 {
+            font-family: 'Playfair Display', serif;
+        }
+    </style>
+</head>
+<body class="min-h-screen">
+    <!-- Navigation Bar -->
+    <nav class="fixed w-full px-6 py-4 flex justify-between items-center bg-white shadow-md z-50">
+        <a href="#" class="text-2xl font-bold text-[var(--primary-color)]">Swadeshi</a>
+        <ul class="hidden md:flex space-x-8 text-gray-700 font-semibold">
+            <li><a href="index.html" class="nav-link">Home</a></li>
+            <li><a href="#" class="nav-link">About</a></li>
+            <li><a href="index.html" class="nav-link">Contact</a></li>
+        </ul>
+        <div class="flex items-center space-x-4">
+            <button class="btn-primary px-4 py-2 rounded-full" id="login-btn"> Login </button>
+            <button id="mobile-menu-btn" class="md:hidden text-[var(--primary-color)]">
+                <i class="fas fa-bars fa-lg"></i>
+            </button>
+        </div>
+    </nav>
+    <!-- Mobile Menu -->
+    <div id="mobile-menu" class="hidden md:hidden bg-white shadow-lg absolute top-full left-0 right-0 z-40">
+        <ul class="flex flex-col p-4 space-y-3 font-semibold text-gray-700">
+            <li><a href="index.html" class="block py-2">Home</a></li>
+            <li><a href="#" class="block py-2">About</a></li>
+            <li><a href="#" class="block py-2">Contact</a></li>
+        </ul>
+    </div>
+    <!-- Main Content -->
+    <div class="pt-20">
+        <!-- Add your content here -->
+    </div>
+    <!-- Footer -->
+    <footer class="bg-[var(--dark-color)] text-white py-12">
+        <div class="container mx-auto px-6">
+            <div class="">
+                <p><script type="module">
+  import Typebot from 'https://cdn.jsdelivr.net/npm/@typebot.io/js@0/dist/web.js';
+
+  Typebot.initStandard({ typebot: "kalakriti-yz7njua" });
+</script>
+
+<typebot-standard style="height: 100vh; "></typebot-standard> </p>
+            </div>
+        </div>
+    </footer>
+    <script>
+        // Mobile menu toggle
+        const mobileMenuBtn = document.getElementById('mobile-menu-btn');
+        const mobileMenu = document.getElementById('mobile-menu');
+        mobileMenuBtn.addEventListener('click', () => {
+            mobileMenu.classList.toggle('hidden');
+        });
+    </script>
+    <script src="https://unpkg.com/lenis@1.3.11/dist/lenis.min.js"></script>
+    <script src="script.js"></script>
+    
+</body

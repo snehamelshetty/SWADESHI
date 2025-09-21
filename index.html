@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Swadeshi - Handmade Artisan Marketplace</title>
+    <link rel="stylesheet" href="https://unpkg.com/lenis@1.3.11/dist/lenis.css">
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- FontAwesome for icons -->
@@ -154,6 +155,7 @@
         }
     </style>
 </head>
+
 <body class="min-h-screen">
     <!-- Navigation Bar -->
     <nav class="fixed w-full px-6 py-4 flex justify-between items-center bg-white shadow-md z-50">
@@ -202,11 +204,13 @@
                 </p>
                 <div class="flex space-x-4 fade-in delay-2">
                     <a href="#shop" class="btn-primary px-8 py-3 rounded-full font-semibold">Shop Now</a>
-                    <a href="#sell" class="btn-outline px-8 py-3 rounded-full font-semibold">Sell Products</a>
+                    <a href="#sell" class="btn-outline  px-8 py-3 rounded-full font-semibold">Sell Products</a>
                 </div>
             </div>
         </div>
     </section>
+
+    
 
     <!-- Kalakriti! Section -->
     <section id="kalakriti" class="py-20 bg-[var(--light-color)]">
@@ -220,7 +224,7 @@
                     Meet <strong>Kalakriti!</strong> — your friendly AI assistant ready to help artisans and customers alike. Ask questions about products, selling, shipping, and more.
                 </p>
                 <button id="open-chatbot-btn" class="btn-primary px-8 py-3 rounded-full font-semibold hover:shadow-lg transition" aria-label="Open Kalakriti chatbot">
-                    Chat Now
+                    <a href ="kalakritib.html">Chat now</a>
                 </button>
             </div>
         </div>
@@ -261,7 +265,7 @@
                 <!-- Pottery Card -->
                 <div class="category-card rounded-2xl overflow-hidden shadow-xl fade-in">
                     <div class="h-64 overflow-hidden">
-                        <img src="https://images.unsplash.com/photo-1578004533376-a5d631f4f292?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80" 
+                        <img src="https://www.alphonsostories.com/AlphonSoStoriesImages/downloads/Pottery-blog_0011.jpg" 
                              alt="Handcrafted pottery with intricate designs and earthy tones" class="w-full h-full object-cover">
                     </div>
                     <div class="p-6 bg-[var(--primary-color)] text-white">
@@ -276,7 +280,7 @@
                 <!-- Saree Card -->
                 <div class="category-card rounded-2xl overflow-hidden shadow-xl fade-in delay-1">
                     <div class="h-64 overflow-hidden">
-                        <img src="https://images.unsplash.com/photo-1603275099945-789763a486f2?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80" 
+                        <img src="https://www.deepam.com/cdn/shop/articles/D216968_1080x_8d6419f4-9e6a-4f99-8a9b-c76bdc4bbe54_900x.webp?v=1707470495" 
                              alt="Handwoven silk saree with golden embroidery on a loom" class="w-full h-full object-cover">
                     </div>
                     <div class="p-6 bg-[var(--secondary-color)] text-white">
@@ -291,7 +295,7 @@
                 <!-- Toys Card -->
                 <div class="category-card rounded-2xl overflow-hidden shadow-xl fade-in delay-2">
                     <div class="h-64 overflow-hidden">
-                        <img src="https://images.unsplash.com/photo-1587654780291-39c95004dc7a?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80" 
+                        <img src="https://storeassets.im-cdn.com/standalone/767432/eco_friendly_channapatna_wooden_toys_and_dolls_11.webp" 
                              alt="Colorful handmade wooden toys arranged artistically" class="w-full h-full object-cover">
                     </div>
                     <div class="p-6 bg-[var(--accent-color)] text-[var(--dark-color)]">
@@ -315,7 +319,7 @@
                 <!-- Product 1 -->
                 <div class="product-card rounded-2xl overflow-hidden p-6 fade-in">
                     <div class="h-56 overflow-hidden rounded-xl mb-4">
-                        <img src="https://images.unsplash.com/photo-1533090368676-1fd25485db88?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80" 
+                        <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTSMTPh1vUQafFbX4RXOnNxf339A8xwgq5zZQ&s" 
                              alt="Hand-painted blue pottery vase with intricate floral patterns" 
                              class="w-full h-full object-cover">
                     </div>
@@ -330,7 +334,7 @@
                 <!-- Product 2 -->
                 <div class="product-card rounded-2xl overflow-hidden p-6 fade-in delay-1">
                     <div class="h-56 overflow-hidden rounded-xl mb-4">
-                        <img src="https://images.unsplash.com/photo-1630608893555-bc603c2bd8ab?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80" 
+                        <img src="https://www.singhanias.in/cdn/shop/articles/a7c79ac0397619b0c5304d37acef063e.jpg?v=1668085176" 
                              alt="Handwoven silk saree with golden border and intricate embroidery" 
                              class="w-full h-full object-cover">
                     </div>
@@ -344,8 +348,8 @@
                 
                 <!-- Product 3 -->
                 <div class="product-card rounded-2xl overflow-hidden p-6 fade-in delay-2">
-                    <div class="h-56 overflow-hidden rounded-xl mb-4">
-                        <img src="https://images.unsplash.com/photo-1596461404969-9ae70f2830c1?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80" 
+                    <div class="h-56 overflow-hidden rounded-xl mb-">
+                        <img src="https://i.ebayimg.com/images/g/5gYAAOSwgEhkHDsp/s-l400.jpg" 
                              alt="Handcrafted wooden elephant toy with colorful patterns" 
                              class="w-full h-full object-cover">
                     </div>
@@ -416,23 +420,109 @@
         </div>
     </div>
 
-    <!-- Login Modal -->
-    <div id="login-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50" role="dialog" aria-modal="true" aria-labelledby="login-modal-title">
-        <div class="bg-white rounded-xl max-w-md w-full p-8 relative shadow-lg">
-            <h3 id="login-modal-title" class="text-2xl font-bold mb-6 text-[var(--primary-color)]">Login</h3>
-            <button id="close-login" class="absolute top-4 right-4 text-gray-600 hover:text-[var(--primary-color)] focus:outline-none" aria-label="Close login form">
-                <i class="fas fa-times fa-lg"></i>
-            </button>
-            <form id="login-form" class="flex flex-col gap-4" aria-label="Login form">
-                <input type="email" id="login-email" placeholder="Email" required class="border border-[var(--primary-color)] rounded-md p-3" aria-label="Email" />
-                <input type="password" id="login-password" placeholder="Password" required class="border border-[var(--primary-color)] rounded-md p-3" aria-label="Password" />
-                <button type="submit" class="btn-primary px-8 py-3 rounded-full font-semibold hover:shadow-lg transition" aria-label="Login">
-                    Login
-                </button>
-            </form>
+    
+<!-- Login Modal -->
+<div id="login-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50" role="dialog" aria-modal="true" aria-labelledby="login-modal-title">
+    <div class="bg-white rounded-xl max-w-md w-full p-8 relative shadow-lg">
+        <h3 id="login-modal-title" class="text-2xl font-bold mb-6 text-[var(--primary-color)]">Login</h3>
+        <button id="close-login" class="absolute top-4 right-4 text-gray-600 hover:text-[var(--primary-color)] focus:outline-none" aria-label="Close login form">
+            <i class="fas fa-times fa-lg"></i>
+        </button>
+        <div class="flex justify-center mb-4">
+            <button id="customer-login-btn" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-l">Customer</button>
+            <button id="seller-login-btn" class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded-r">Seller</button>
         </div>
+        
+        <!-- Customer Login Form -->
+        <form id="customer-login-form" class="flex flex-col gap-4" aria-label="Customer login form">
+            <input type="email" id="customer-login-email" placeholder="Email" required class="border border-[var(--primary-color)] rounded-md p-3" aria-label="Email" />
+            <input type="password" id="customer-login-password" placeholder="Password" required class="border border-[var(--primary-color)] rounded-md p-3" aria-label="Password" />
+            <button type="submit" class="btn-primary px-8 py-3 rounded-full font-semibold hover:shadow-lg transition" aria-label="Login"> Login </button>
+        </form>
+        
+        <!-- Seller Login Form -->
+        <form id="seller-login-form" class="hidden flex flex-col gap-4" aria-label="Seller login form">
+            <input type="text" id="seller-pehchan-id" placeholder="Pehchan ID" required class="border border-[var(--primary-color)] rounded-md p-3" aria-label="Pehchan ID" />
+            <input type="tel" id="seller-phone-no" placeholder="Phone Number" required class="border border-[var(--primary-color)] rounded-md p-3" aria-label="Phone Number" />
+            <input type="password" id="seller-password" placeholder="Password" required class="border border-[var(--primary-color)] rounded-md p-3" aria-label="Password" />
+            <select id="seller-state" required class="border border-[var(--primary-color)] rounded-md p-3" aria-label="State">
+                <option value="">Select State</option>
+                <option value="Andhra Pradesh">Andhra Pradesh</option>
+                <option value="Arunachal Pradesh">Arunachal Pradesh</option>
+                <option value="Assam">Assam</option>
+                <option value="Bihar">Bihar</option>
+                <option value="Chhattisgarh">Chhattisgarh</option>
+                <option value="Goa">Goa</option>
+                <option value="Gujarat">Gujarat</option>
+                <option value="Haryana">Haryana</option>
+                <option value="Himachal Pradesh">Himachal Pradesh</option>
+                <option value="Jharkhand">Jharkhand</option>
+                <option value="Karnataka">Karnataka</option>
+                <option value="Kerala">Kerala</option>
+                <option value="Madhya Pradesh">Madhya Pradesh</option>
+                <option value="Maharashtra">Maharashtra</option>
+                <option value="Manipur">Manipur</option>
+                <option value="Meghalaya">Meghalaya</option>
+                <option value="Mizoram">Mizoram</option>
+                <option value="Nagaland">Nagaland</option>
+                <option value="Odisha">Odisha</option>
+                <option value="Punjab">Punjab</option>
+                <option value="Rajasthan">Rajasthan</option>
+                <option value="Sikkim">Sikkim</option>
+                <option value="Tamil Nadu">Tamil Nadu</option>
+                <option value="Telangana">Telangana</option>
+                <option value="Tripura">Tripura</option>
+                <option value="Uttar Pradesh">Uttar Pradesh</option>
+                <option value="Uttarakhand">Uttarakhand</option>
+                <option value="West Bengal">West Bengal</option>
+            </select>
+            <button type="submit" class="btn-primary px-8 py-3 rounded-full font-semibold hover:shadow-lg transition" aria-label="Login"> Login </button>
+        </form>
     </div>
+</div>
 
+<script>
+    const customerLoginBtn = document.getElementById('customer-login-btn');
+    const sellerLoginBtn = document.getElementById('seller-login-btn');
+    const customerLoginForm = document.getElementById('customer-login-form');
+    const sellerLoginForm = document.getElementById('seller-login-form');
+
+    customerLoginBtn.addEventListener('click', () => {
+        customerLoginForm.classList.remove('hidden');
+        sellerLoginForm.classList.add('hidden');
+        customerLoginBtn.classList.remove('bg-gray-300', 'hover:bg-gray-400', 'text-gray-800');
+        customerLoginBtn.classList.add('bg-blue-500', 'hover:bg-blue-700', 'text-white');
+        sellerLoginBtn.classList.remove('bg-blue-500', 'hover:bg-blue-700', 'text-white');
+        sellerLoginBtn.classList.add('bg-gray-300', 'hover:bg-gray-400', 'text-gray-800');
+    });
+
+    sellerLoginBtn.addEventListener('click', () => {
+        sellerLoginForm.classList.remove('hidden');
+        customerLoginForm.classList.add('hidden');
+        sellerLoginBtn.classList.remove('bg-gray-300', 'hover:bg-gray-400', 'text-gray-800');
+        sellerLoginBtn.classList.add('bg-blue-500', 'hover:bg-blue-700', 'text-white');
+        customerLoginBtn.classList.remove('bg-blue-500', 'hover:bg-blue-700', 'text-white');
+        customerLoginBtn.classList.add('bg-gray-300', 'hover:bg-gray-400', 'text-gray-800');
+    });
+
+    // Customer login form submission
+    customerLoginForm.addEventListener('submit', e => {
+        e.preventDefault();
+        alert('Customer login functionality is not implemented in this demo.');
+        customerLoginForm.reset();
+    });
+
+    // Seller login form submission
+    sellerLoginForm.addEventListener('submit', e => {
+        e.preventDefault();
+        const pehchanId = document.getElementById('seller-pehchan-id').value;
+        const phoneNo = document.getElementById('seller-phone-no').value;
+        const password = document.getElementById('seller-password').value;
+        const state = document.getElementById('seller-state').value;
+        alert(`Seller login functionality is not implemented in this demo. You entered: Pehchan ID - ${pehchanId}, Phone No - ${phoneNo}, Password - ${password}, State - ${state}`);
+        sellerLoginForm.reset();
+    });
+</script>
     <!-- Footer -->
     <footer class="bg-[var(--dark-color)] text-white py-12">
         <div class="container mx-auto px-6">
@@ -488,26 +578,32 @@
         // Mobile menu toggle
         const mobileMenuBtn = document.getElementById('mobile-menu-btn');
         const mobileMenu = document.getElementById('mobile-menu');
-        mobileMenuBtn.addEventListener('click', () => {
-            mobileMenu.classList.toggle('hidden');
-        });
+        if (mobileMenuBtn && mobileMenu) {
+            mobileMenuBtn.addEventListener('click', () => {
+                mobileMenu.classList.toggle('hidden');
+            });
+        }
 
         // Contact modal open/close
         const contactModal = document.getElementById('contact-modal');
         const contactLinks = document.querySelectorAll('a[href="#contact"], nav a[href="#contact"]');
         const closeContactBtn = document.getElementById('close-contact');
-        contactLinks.forEach(link => {
-            link.addEventListener('click', e => {
-                e.preventDefault();
-                contactModal.classList.remove('hidden');
+        if (contactModal && contactLinks.length) {
+            contactLinks.forEach(link => {
+                link.addEventListener('click', e => {
+                    e.preventDefault();
+                    contactModal.classList.remove('hidden');
+                });
             });
-        });
-        closeContactBtn.addEventListener('click', () => {
-            contactModal.classList.add('hidden');
-        });
-        contactModal.addEventListener('click', e => {
-            if (e.target === contactModal) contactModal.classList.add('hidden');
-        });
+        }
+        if (closeContactBtn && contactModal) {
+            closeContactBtn.addEventListener('click', () => {
+                contactModal.classList.add('hidden');
+            });
+            contactModal.addEventListener('click', e => {
+                if (e.target === contactModal) contactModal.classList.add('hidden');
+            });
+        }
 
         // Login modal open/close
         const loginModal = document.getElementById('login-modal');
@@ -583,5 +679,8 @@
             });
         });
     </script>
+    
+    <script src="https://unpkg.com/lenis@1.3.11/dist/lenis.min.js"></script> 
+    <script src="script.js"></script>
 </body>
 </html>
