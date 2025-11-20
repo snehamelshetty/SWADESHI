@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Product — Swadeshi</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&family=Playfair+Display:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    :root{ --primary:#8b5a2b; --light:#f8f3e9; --dark:#3c2f28; }
+    body { font-family:'Poppins',sans-serif; background:var(--light); color:var(--dark); }
+    h1,h2{ font-family:'Playfair Display',serif; }
+  </style>
+</head>
+<body class="min-h-screen">
+
+  <nav class="fixed top-0 left-0 right-0 bg-white shadow px-6 py-4 z-40">
+    <div class="max-w-6xl mx-auto flex items-center justify-between">
+      <a href="index.html" class="text-2xl font-bold text-[var(--primary)]">SWADESHI</a>
+      <div>
+        <a href="customer-home.html" class="mr-4">Home</a>
+        <a href="cart.html">Cart</a>
+      </div>
+    </div>
+  </nav>
+
+  <main class="pt-24 max-w-6xl mx-auto px-6">
+    <div id="product-wrap" class="bg-white rounded-xl p-6 shadow">
+      <p class="text-center text-gray-500">Loading product…</p>
+    </div>
+  </main>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/9.24.0/firebase-app.js";
+  import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/9.24.0/firebase-firestore.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyAs8Ee4DFiPXq3o8UgCgrLFKmLECmxiuyc",
+    authDomain: "swadeshi-b73c1.firebaseapp.com",
+    projectId: "swadeshi-b73c1",
+    storageBucket: "swadeshi-b73c1.appspot.com",
+    messagingSenderId: "976631330768",
+    appId: "1:976631330768:web:addc77ae3062dee1a9abd5"
+  };
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
+
+  const wrap = document.getElementById('product-wrap');
+
+  function getParam(name){
+    const u = new URL(location.href);
+    return u.searchParams.get(name);
+  }
+
+  async function loadProduct(){
+    const id = getParam('id');
+    if(!id) { wrap.innerHTML = '<p class="text-red-600">No product id provided.</p>'; return; }
+
+    try{
+      const pSnap = await getDoc(doc(db,'products', id));
+      if(!pSnap.exists()){ wrap.innerHTML = '<p class="text-red-600">Product not found.</p>'; return; }
+      const p = pSnap.data();
+      const imgs = p.images && p.images.length ? p.images : ['https://via.placeholder.com/600x400?text=No+Image'];
+
+      wrap.innerHTML = `
+        <div class="grid md:grid-cols-2 gap-6">
+          <div>
+            <img id="mainImg" src="${imgs[0]}" class="w-full h-96 object-cover rounded" />
+            <div class="flex gap-2 mt-3">
+              ${imgs.map((u,i)=>`<img src="${u}" data-index="${i}" class="w-20 h-16 object-cover rounded cursor-pointer border">`).join('')}
+            </div>
+          </div>
+          <div>
+            <h1 class="text-2xl font-bold text-[var(--primary)]">${(p.name||'')}</h1>
+            <p class="text-gray-600 mt-2">${(p.description||'')}</p>
+            <div class="mt-4">
+              <div class="text-2xl font-bold text-[var(--primary)]">₹${p.price}</div>
+              <div class="text-sm text-gray-500">Stock: ${p.stock || 0}</div>
+            </div>
+            <div class="mt-6 flex gap-3">
+              <button id="addToCart" class="bg-[var(--primary)] text-white px-4 py-2 rounded">Add to Cart</button>
+              <a href="cart.html" class="px-4 py-2 border rounded">Go to Cart</a>
+            </div>
+          </div>
+        </div>
+      `;
+
+      // click thumbnails
+      wrap.querySelectorAll('img[data-index]').forEach(img=>{
+        img.addEventListener('click', e=>{
+          document.getElementById('mainImg').src = e.currentTarget.src;
+        });
+      });
+
+      document.getElementById('addToCart').addEventListener('click', async ()=>{
+        const cart = JSON.parse(localStorage.getItem('swadeshi_cart')||'[]');
+        const existing = cart.find(x=>x.id===id);
+        if(existing) existing.qty += 1; else cart.push({ id, name:p.name, price:p.price, qty:1, sellerId:p.sellerId, img: imgs[0] });
+        localStorage.setItem('swadeshi_cart', JSON.stringify(cart));
+        alert('Added to cart');
+      });
+
+    }catch(err){
+      console.error(err);
+      wrap.innerHTML = '<p class="text-red-600">Failed to load product.</p>';
+    }
+  }
+
+  loadProduct();
+</script>
+
+</body>
+</html>

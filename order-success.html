@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Order Success — Swadeshi</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style> :root{--primary:#8b5a2b;} body{ font-family: Inter, sans-serif; background:#f7f2ea; } .card{ max-width:720px; } </style>
+</head>
+<body class="min-h-screen flex items-center justify-center">
+
+  <div class="bg-white p-8 rounded-xl shadow card text-center">
+    <h1 class="text-2xl font-bold mb-3 text-[var(--primary)]">Thank you for your order!</h1>
+    <p class="mb-4" id="msg">Fetching order details…</p>
+    <a href="customer-home.html" class="px-6 py-2 bg-[#8b5a2b] text-white rounded">Continue shopping</a>
+  </div>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/9.24.0/firebase-app.js";
+  import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/9.24.0/firebase-firestore.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyAs8Ee4DFiPXq3o8UgCgrLFKmLECmxiuyc",
+    authDomain: "swadeshi-b73c1.firebaseapp.com",
+    projectId: "swadeshi-b73c1",
+    storageBucket: "swadeshi-b73c1.appspot.com",
+    messagingSenderId: "976631330768",
+    appId: "1:976631330768:web:addc77ae3062dee1a9abd5"
+  };
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
+
+  function getParam(name){
+    const u = new URL(location.href);
+    return u.searchParams.get(name);
+  }
+
+  async function load(){
+    const id = getParam('id');
+    const p = document.getElementById('msg');
+    if(!id){ p.textContent = 'No order id provided.'; return; }
+
+    try{
+      const snap = await getDoc(doc(db,'orders', id));
+      if(!snap.exists()){ p.textContent = `Order placed (ID: ${id}).` ; return; }
+      const o = snap.data();
+      p.innerHTML = `Order <strong>#${id}</strong> placed on <strong>${new Date(o.date).toLocaleString()}</strong>.<br>Total: <strong>₹${o.totalAmount}</strong><br>Status: <strong>${o.orderStatus}</strong>`;
+    }catch(err){
+      console.error(err);
+      p.textContent = `Order placed (ID: ${id}).`;
+    }
+  }
+
+  load();
+</script>
+
+</body>
+</html>
