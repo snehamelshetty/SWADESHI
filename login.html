@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Swadeshi – Login / Register</title>
+
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&family=Playfair+Display:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --primary:#8b5a2b; --accent:#d4af37; --light:#f8f3e9; --dark:#3c2f28;
+}
+body{font-family:'Poppins',sans-serif;background:var(--light);color:var(--dark);}
+h1,h2{font-family:'Playfair Display',serif;}
+.btn-primary{background:var(--primary);color:white;}
+.btn-primary:hover{background:var(--accent);}
+.tab-active{background:var(--primary)!important;color:white!important;}
+.container { max-width: 720px; }
+</style>
+</head>
+<body class="min-h-screen flex items-center justify-center p-6">
+
+<div class="w-full container bg-white p-8 rounded-2xl shadow-xl border border-[var(--primary)]/30">
+  <h2 class="text-center text-4xl font-bold text-[var(--primary)] mb-6">Swadeshi</h2>
+
+  <div class="flex border rounded-full overflow-hidden mb-6">
+    <button id="tabLogin" class="w-1/2 py-3 font-semibold tab-active">Login</button>
+    <button id="tabRegister" class="w-1/2 py-3 font-semibold">Register</button>
+  </div>
+
+  <!-- LOGIN -->
+  <div id="loginPane">
+    <input id="loginEmail" type="email" placeholder="Email" class="w-full p-3 border rounded mb-3" />
+    <input id="loginPassword" type="password" placeholder="Password" class="w-full p-3 border rounded mb-4" />
+    <button id="btnLogin" class="btn-primary w-full py-3 rounded-full">Login</button>
+    <p id="loginMsg" class="text-red-600 text-sm mt-2"></p>
+  </div>
+
+  <!-- REGISTER -->
+  <div id="registerPane" class="hidden">
+    <p class="font-semibold text-sm mb-2">Register as:</p>
+    <div class="flex gap-4 mb-4">
+      <button id="roleCustomer" class="flex-1 py-2 border rounded-full tab-active">Customer</button>
+      <button id="roleSeller" class="flex-1 py-2 border rounded-full">Seller</button>
+    </div>
+
+    <input id="regName" type="text" placeholder="Full Name" class="w-full p-3 border rounded mb-3" />
+    <input id="regEmail" type="email" placeholder="Email" class="w-full p-3 border rounded mb-3" />
+    <input id="regPassword" type="password" placeholder="Password (min 6 chars)" class="w-full p-3 border rounded mb-3" />
+
+    <div id="sellerExtra" class="hidden space-y-3 mb-3">
+      <input id="regShop" type="text" placeholder="Shop Name" class="w-full border p-3 rounded" />
+      <input id="regGST" type="text" placeholder="GST / Business ID" class="w-full border p-3 rounded" />
+      <textarea id="regAddress" placeholder="Shop Address" class="w-full border p-3 rounded"></textarea>
+      <input id="regCategory" type="text" placeholder="Main Category (e.g., Pottery)" class="w-full border p-3 rounded" />
+    </div>
+
+    <button id="btnRegister" class="btn-primary w-full py-3 rounded-full">Register</button>
+    <p id="registerMsg" class="text-red-600 text-sm mt-2"></p>
+  </div>
+</div>
+
+<script type="module">
+/* ===============================
+   FIXED & ROBUST Firebase Login
+   =============================== */
+
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import {
+  getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, updateProfile, onAuthStateChanged
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import {
+  getFirestore, doc, setDoc, getDoc, serverTimestamp
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+/* ---------- CONFIG: update if needed ---------- */
+const firebaseConfig = {
+  apiKey: "AIzaSyAs8Ee4DFiPXq3o8UgCgrLFKmLECmxiuyc",
+  authDomain: "swadeshi-b73c1.firebaseapp.com",
+  projectId: "swadeshi-b73c1",
+  storageBucket: "swadeshi-b73c1.appspot.com",
+  messagingSenderId: "976631330768",
+  appId: "1:976631330768:web:addc77ae3062dee1a9abd5"
+};
+
+/* ---------- INIT ---------- */
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);           // <-- IMPORTANT: pass the app instance
+const db = getFirestore(app);        // <-- IMPORTANT: pass the app instance
+
+/* ---------- UI refs ---------- */
+const tabLogin = document.getElementById("tabLogin");
+const tabRegister = document.getElementById("tabRegister");
+const loginPane = document.getElementById("loginPane");
+const registerPane = document.getElementById("registerPane");
+const roleCustomer = document.getElementById("roleCustomer");
+const roleSeller = document.getElementById("roleSeller");
+const sellerExtra = document.getElementById("sellerExtra");
+const btnRegister = document.getElementById("btnRegister");
+const btnLogin = document.getElementById("btnLogin");
+const loginMsg = document.getElementById("loginMsg");
+const registerMsg = document.getElementById("registerMsg");
+
+let role = "customer";
+
+/* ---------- TAB handling ---------- */
+tabRegister.addEventListener('click', () => {
+  tabRegister.classList.add("tab-active");
+  tabLogin.classList.remove("tab-active");
+  loginPane.classList.add("hidden");
+  registerPane.classList.remove("hidden");
+});
+tabLogin.addEventListener('click', () => {
+  tabLogin.classList.add("tab-active");
+  tabRegister.classList.remove("tab-active");
+  registerPane.classList.add("hidden");
+  loginPane.classList.remove("hidden");
+});
+
+/* ---------- role selection ---------- */
+roleCustomer.addEventListener('click', () => {
+  role = "customer";
+  sellerExtra.classList.add("hidden");
+  roleCustomer.classList.add("tab-active");
+  roleSeller.classList.remove("tab-active");
+});
+roleSeller.addEventListener('click', () => {
+  role = "seller";
+  sellerExtra.classList.remove("hidden");
+  roleSeller.classList.add("tab-active");
+  roleCustomer.classList.remove("tab-active");
+});
+
+/* ---------- helper to show errors ---------- */
+function showError(el, msg){
+  el.textContent = msg;
+  console.warn(msg);
+}
+
+/* ---------- auto-redirect if already signed in ---------- */
+onAuthStateChanged(auth, async (user) => {
+  if (!user) {
+    console.log('No user signed in');
+    return;
+  }
+  console.log('User signed in:', user.uid);
+  // check role in Firestore and redirect
+  try {
+    const snap = await getDoc(doc(db, "users", user.uid));
+    if (!snap.exists()) {
+      console.warn('User doc missing for uid', user.uid);
+      return;
+    }
+    const data = snap.data();
+    if (data.role === "seller") window.location.href = "seller-dashboard.html";
+    else window.location.href = "customer-home.html";
+  } catch (err) {
+    console.error('Role check failed', err);
+  }
+});
+
+/* ---------- REGISTER ---------- */
+btnRegister.addEventListener('click', async () => {
+  registerMsg.textContent = "";
+  const name = document.getElementById("regName").value.trim();
+  const email = document.getElementById("regEmail").value.trim();
+  const password = document.getElementById("regPassword").value.trim();
+
+  if (!name || !email || password.length < 6) {
+    showError(registerMsg, "Please fill name, email and a password (min 6 chars).");
+    return;
+  }
+
+  // if seller, validate seller fields too
+  if (role === "seller") {
+    const shop = document.getElementById("regShop").value.trim();
+    const gst = document.getElementById("regGST").value.trim();
+    if (!shop || !gst) {
+      showError(registerMsg, "Please provide Shop Name and GST/Business ID for sellers.");
+      return;
+    }
+  }
+
+  try {
+    // create auth user
+    const cred = await createUserWithEmailAndPassword(auth, email, password);
+    const user = cred.user;
+    console.log("Created user:", user.uid);
+
+    // set display name
+    await updateProfile(user, { displayName: name });
+
+    // write users doc
+    await setDoc(doc(db, "users", user.uid), {
+      name, email, role, createdAt: serverTimestamp()
+    });
+
+    // if seller write sellers doc
+    if (role === "seller") {
+      await setDoc(doc(db, "sellers", user.uid), {
+        shopName: document.getElementById("regShop").value.trim(),
+        gstNumber: document.getElementById("regGST").value.trim(),
+        address: document.getElementById("regAddress").value.trim(),
+        category: document.getElementById("regCategory").value.trim(),
+        createdAt: serverTimestamp()
+      });
+      window.location.href = "seller-dashboard.html";
+      return;
+    }
+
+    // customer redirect
+    window.location.href = "customer-home.html";
+
+  } catch (err) {
+    console.error('Register error', err);
+    showError(registerMsg, err.message || 'Registration failed');
+  }
+});
+
+/* ---------- LOGIN ---------- */
+btnLogin.addEventListener('click', async () => {
+  loginMsg.textContent = "";
+  const email = document.getElementById("loginEmail").value.trim();
+  const password = document.getElementById("loginPassword").value.trim();
+
+  if (!email || !password) {
+    showError(loginMsg, "Please enter email and password.");
+    return;
+  }
+
+  try {
+    const cred = await signInWithEmailAndPassword(auth, email, password);
+    const user = cred.user;
+    console.log('Signed in:', user.uid);
+
+    // fetch role
+    const snap = await getDoc(doc(db, "users", user.uid));
+    if (!snap.exists()) {
+      showError(loginMsg, "Your profile is missing — please re-register or contact support.");
+      return;
+    }
+    const data = snap.data();
+    if (data.role === "seller") window.location.href = "seller-dashboard.html";
+    else window.location.href = "customer-home.html";
+
+  } catch (err) {
+    console.error('Login error', err);
+    showError(loginMsg, err.message || 'Login failed');
+  }
+});
+</script>
+</body>
+</html>
