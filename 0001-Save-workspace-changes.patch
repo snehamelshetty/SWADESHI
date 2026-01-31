@@ -1,0 +1,3567 @@
+From 9fd4349c8aad4d2392036028993fbf4b999992b0 Mon Sep 17 00:00:00 2001
+From: snehamelshetty <snehaamelshetty9@gmail.com>
+Date: Sat, 31 Jan 2026 22:39:11 +0530
+Subject: [PATCH] Save workspace changes
+
+---
+ .vscode/cart.html          | 151 ----------
+ .vscode/customer-home.html | 271 ------------------
+ .vscode/launch.json        |  15 -
+ .vscode/order-success.html |  58 ----
+ .vscode/product.html       | 113 --------
+ Kalakritib.html            |   2 +-
+ canvas.js                  | 207 ++++++++++++++
+ cart.html                  | 176 ++++++------
+ customer-home.html         | 301 ++++++++++----------
+ generate_image_stub.js     |  39 +++
+ i18n.js                    |  73 +++++
+ index.html                 | 201 +++++++++++++-
+ main.js                    | 186 ++++++++-----
+ product.html               | 247 ++++++++++++-----
+ seed-product.js            |  70 +++++
+ seller-dashboard.html      | 143 +++++++++-
+ seller-dashboard.js        | 552 ++++++++++++++++++++++++++++++-------
+ translations.js            | 103 +++++++
+ 18 files changed, 1795 insertions(+), 1113 deletions(-)
+ delete mode 100644 .vscode/cart.html
+ delete mode 100644 .vscode/customer-home.html
+ delete mode 100644 .vscode/launch.json
+ delete mode 100644 .vscode/order-success.html
+ delete mode 100644 .vscode/product.html
+ create mode 100644 canvas.js
+ create mode 100644 generate_image_stub.js
+ create mode 100644 i18n.js
+ create mode 100644 seed-product.js
+ create mode 100644 translations.js
+
+diff --git a/.vscode/cart.html b/.vscode/cart.html
+deleted file mode 100644
+index d1606e8..0000000
+--- a/.vscode/cart.html
++++ /dev/null
+@@ -1,151 +0,0 @@
+-<!doctype html>
+-<html lang="en">
+-<head>
+-  <meta charset="utf-8" />
+-  <meta name="viewport" content="width=device-width,initial-scale=1" />
+-  <title>Cart — Swadeshi</title>
+-  <script src="https://cdn.tailwindcss.com"></script>
+-  <style>
+-    :root{ --primary:#8b5a2b; --light:#f8f3e9; --dark:#3c2f28; }
+-    body{ font-family: Inter, sans-serif; background:var(--light); color:var(--dark); }
+-  </style>
+-</head>
+-<body class="min-h-screen">
+-
+-  <nav class="fixed top-0 left-0 right-0 bg-white shadow px-6 py-4 z-40">
+-    <div class="max-w-6xl mx-auto flex items-center justify-between">
+-      <a href="index.html" class="text-2xl font-bold text-[var(--primary)]">SWADESHI</a>
+-      <div><a href="customer-home.html">Continue shopping</a></div>
+-    </div>
+-  </nav>
+-
+-  <main class="pt-24 max-w-4xl mx-auto px-6">
+-    <h1 class="text-2xl font-semibold mb-4">Your Cart</h1>
+-
+-    <div id="cart-wrap" class="bg-white p-6 rounded-xl shadow">
+-      <p id="emptyMsg" class="text-gray-500">Loading cart...</p>
+-
+-      <div id="items" class="space-y-4 mt-2"></div>
+-
+-      <div id="checkoutPanel" class="mt-6 hidden">
+-        <div class="flex justify-between items-center">
+-          <div>
+-            <p class="text-sm text-gray-600">Subtotal</p>
+-            <div id="subtotal" class="text-2xl font-bold text-[var(--primary)]">₹0</div>
+-          </div>
+-          <div>
+-            <button id="btnCheckout" class="bg-[var(--primary)] text-white px-5 py-3 rounded">Checkout</button>
+-          </div>
+-        </div>
+-      </div>
+-    </div>
+-  </main>
+-
+-<script type="module">
+-  import { initializeApp } from "https://www.gstatic.com/firebasejs/9.24.0/firebase-app.js";
+-  import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.24.0/firebase-auth.js";
+-  import { getFirestore, collection, addDoc } from "https://www.gstatic.com/firebasejs/9.24.0/firebase-firestore.js";
+-
+-  const firebaseConfig = {
+-    apiKey: "AIzaSyAs8Ee4DFiPXq3o8UgCgrLFKmLECmxiuyc",
+-    authDomain: "swadeshi-b73c1.firebaseapp.com",
+-    projectId: "swadeshi-b73c1",
+-    storageBucket: "swadeshi-b73c1.appspot.com",
+-    messagingSenderId: "976631330768",
+-    appId: "1:976631330768:web:addc77ae3062dee1a9abd5"
+-  };
+-  const app = initializeApp(firebaseConfig);
+-  const auth = getAuth(app);
+-  const db = getFirestore(app);
+-
+-  const itemsEl = document.getElementById('items');
+-  const emptyMsg = document.getElementById('emptyMsg');
+-  const checkoutPanel = document.getElementById('checkoutPanel');
+-  const subtotalEl = document.getElementById('subtotal');
+-  const btnCheckout = document.getElementById('btnCheckout');
+-
+-  function getCart(){ try { return JSON.parse(localStorage.getItem('swadeshi_cart')) || []; } catch { return []; } }
+-  function saveCart(c){ localStorage.setItem('swadeshi_cart', JSON.stringify(c)); renderCart(); }
+-
+-  function renderCart(){
+-    const cart = getCart();
+-    if(!cart.length){ emptyMsg.textContent = 'Your cart is empty.'; itemsEl.innerHTML=''; checkoutPanel.classList.add('hidden'); return; }
+-    emptyMsg.textContent = '';
+-    itemsEl.innerHTML = '';
+-    let subtotal = 0;
+-    cart.forEach((it, idx)=>{
+-      subtotal += (it.price||0) * it.qty;
+-      const row = document.createElement('div');
+-      row.className = 'flex items-center gap-4';
+-      row.innerHTML = `
+-        <img src="${it.img||'https://via.placeholder.com/100'}" class="w-24 h-20 object-cover rounded">
+-        <div class="flex-1">
+-          <div class="font-semibold">${it.name}</div>
+-          <div class="text-sm text-gray-600">₹${it.price}</div>
+-          <div class="mt-2 flex items-center gap-2">
+-            <button data-idx="${idx}" class="dec px-2 py-1 border rounded">-</button>
+-            <span>${it.qty}</span>
+-            <button data-idx="${idx}" class="inc px-2 py-1 border rounded">+</button>
+-            <button data-idx="${idx}" class="remove ml-4 text-red-600">Remove</button>
+-          </div>
+-        </div>
+-      `;
+-      itemsEl.appendChild(row);
+-    });
+-    subtotalEl.textContent = '₹' + subtotal;
+-    checkoutPanel.classList.remove('hidden');
+-
+-    // attach handlers
+-    document.querySelectorAll('.inc').forEach(b=>b.addEventListener('click', e=>{
+-      const i = +e.currentTarget.dataset.idx; const cart = getCart(); cart[i].qty += 1; saveCart(cart);
+-    }));
+-    document.querySelectorAll('.dec').forEach(b=>b.addEventListener('click', e=>{
+-      const i = +e.currentTarget.dataset.idx; const cart = getCart(); if(cart[i].qty>1) cart[i].qty -= 1; else cart.splice(i,1); saveCart(cart);
+-    }));
+-    document.querySelectorAll('.remove').forEach(b=>b.addEventListener('click', e=>{
+-      const i = +e.currentTarget.dataset.idx; const cart = getCart(); cart.splice(i,1); saveCart(cart);
+-    }));
+-  }
+-
+-  btnCheckout.addEventListener('click', async ()=>{
+-    const cart = getCart();
+-    if(!cart.length){ alert('Your cart is empty'); return; }
+-
+-    // ensure user signed in (checkout requires auth)
+-    const user = await new Promise(resolve=>{
+-      const unsub = onAuthStateChanged(auth, u=>{ unsub(); resolve(u); });
+-    });
+-
+-    if(!user){
+-      if(confirm('Please login to checkout. Go to login page?')) window.location.href='login.html';
+-      return;
+-    }
+-
+-    // build order payload
+-    const items = cart.map(i=>({ productId: i.id, name:i.name, qty:i.qty, price:i.price, sellerId: i.sellerId }));
+-    const total = items.reduce((s,it)=> s + (it.price||0)*it.qty, 0);
+-
+-    try {
+-      const orderDoc = {
+-        customerId: user.uid,
+-        customerName: user.displayName || user.email || '',
+-        items,
+-        totalAmount: total,
+-        orderStatus: 'Processing',
+-        date: new Date().toISOString()
+-      };
+-      const ref = await addDoc(collection(db,'orders'), orderDoc);
+-      localStorage.removeItem('swadeshi_cart'); // clear cart
+-      window.location.href = `order-success.html?id=${ref.id}`;
+-    } catch(err){
+-      console.error('Checkout failed', err);
+-      alert('Checkout failed.');
+-    }
+-  });
+-
+-  // initial render
+-  renderCart();
+-</script>
+-
+-</body>
+-</html>
+diff --git a/.vscode/customer-home.html b/.vscode/customer-home.html
+deleted file mode 100644
+index 51a561b..0000000
+--- a/.vscode/customer-home.html
++++ /dev/null
+@@ -1,271 +0,0 @@
+-<!doctype html>
+-<html lang="en">
+-<head>
+-  <meta charset="utf-8" />
+-  <meta name="viewport" content="width=device-width,initial-scale=1" />
+-  <title>Swadeshi — Home</title>
+-
+-  <script src="https://cdn.tailwindcss.com"></script>
+-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&family=Playfair+Display:wght@400;600&display=swap" rel="stylesheet">
+-
+-  <style>
+-    :root{
+-      --primary:#8b5a2b; --accent:#d4af37; --light:#f8f3e9; --dark:#3c2f28;
+-    }
+-    body { font-family: 'Poppins', sans-serif; background:var(--light); color:var(--dark); }
+-    h1,h2,h3 { font-family:'Playfair Display', serif; }
+-    .btn-primary { background:var(--primary); color:white; }
+-    .btn-outline { border:2px solid var(--primary); color:var(--primary); }
+-  </style>
+-</head>
+-<body class="min-h-screen">
+-
+-  <!-- NAV -->
+-  <nav class="fixed top-0 left-0 right-0 bg-white shadow px-6 py-4 z-40">
+-    <div class="max-w-6xl mx-auto flex items-center justify-between">
+-      <a class="text-2xl font-bold text-[var(--primary)]"><span class="text-[var(--accent)]">SWAD</span>ESHI</a>
+-      <div class="flex items-center gap-4">
+-        <a href="index.html" class="text-sm">Home</a>
+-        <a href="#shop" class="text-sm">Shop</a>
+-        <a id="cart-link" href="cart.html" class="text-sm">Cart (<span id="cart-count">0</span>)</a>
+-        <button id="auth-btn" class="btn-primary px-4 py-1 rounded-full">Login</button>
+-      </div>
+-    </div>
+-  </nav>
+-
+-  <!-- HERO -->
+-  <section class="pt-24 pb-10">
+-    <div class="max-w-6xl mx-auto px-6 grid md:grid-cols-2 gap-6 items-center">
+-      <div>
+-        <h1 class="text-5xl font-bold text-[var(--primary)]">Handmade for home — crafted by local artisans</h1>
+-        <p class="mt-4 text-lg text-gray-700 max-w-xl">Discover unique, sustainable pieces — pottery, sarees, toys and more. Shop directly from makers.</p>
+-        <div class="mt-6 flex gap-3">
+-          <a href="#shop" class="btn-primary px-6 py-3 rounded-full">Shop Now</a>
+-          <a href="seller-dashboard.html" class="btn-outline px-6 py-3 rounded-full">Sell on Swadeshi</a>
+-        </div>
+-      </div>
+-      <div class="hidden md:block">
+-        <img src="https://images.unsplash.com/photo-1589100029763-602428cb5c59?auto=format&fit=crop&w=900&q=60" class="rounded-lg shadow" alt="hero">
+-      </div>
+-    </div>
+-  </section>
+-
+-  <!-- CATEGORIES -->
+-  <section id="categories" class="py-8">
+-    <div class="max-w-6xl mx-auto px-6">
+-      <h2 class="text-3xl font-semibold text-[var(--primary)] mb-4">Categories</h2>
+-      <div class="grid grid-cols-2 md:grid-cols-6 gap-4">
+-        <button class="category-chip p-3 rounded-lg bg-white shadow text-sm">Pottery</button>
+-        <button class="category-chip p-3 rounded-lg bg-white shadow text-sm">Sarees</button>
+-        <button class="category-chip p-3 rounded-lg bg-white shadow text-sm">Toys</button>
+-        <button class="category-chip p-3 rounded-lg bg-white shadow text-sm">Handicrafts</button>
+-        <button class="category-chip p-3 rounded-lg bg-white shadow text-sm">Home Decor</button>
+-        <button class="category-chip p-3 rounded-lg bg-white shadow text-sm">Fashion</button>
+-      </div>
+-    </div>
+-  </section>
+-
+-  <!-- PRODUCTS GRID -->
+-  <section id="shop" class="py-6">
+-    <div class="max-w-6xl mx-auto px-6">
+-      <div class="flex items-center justify-between mb-4">
+-        <h2 class="text-3xl font-semibold text-[var(--primary)]">Featured Products</h2>
+-        <input id="search" placeholder="Search products..." class="border p-2 rounded w-64" />
+-      </div>
+-
+-      <div id="products-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+-        <!-- products injected here -->
+-      </div>
+-    </div>
+-  </section>
+-
+-  <!-- Floating chatbot -->
+-  <div id="chatbotBtn" class="fixed bottom-6 right-6 bg-[var(--primary)] text-white p-4 rounded-full shadow cursor-pointer z-40">
+-    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a8 8 0 0 1 8 8v3a4 4 0 0 1-4 4h-1v3l-4-3h-1a4 4 0 0 1-4-4V10a8 8 0 0 1 8-8z"/></svg>
+-  </div>
+-  <div id="chatbotWindow" class="fixed bottom-24 right-6 w-80 bg-white shadow rounded-xl p-3 hidden z-50">
+-    <div class="flex justify-between items-center mb-2">
+-      <h4 class="text-[var(--primary)] font-semibold">Kalakriti AI</h4>
+-      <button id="closeChat" class="text-gray-500">✕</button>
+-    </div>
+-    <iframe src="kalakritib.html" class="w-full h-64 rounded"></iframe>
+-  </div>
+-
+-<script type="module">
+-  // Firebase imports
+-  import { initializeApp } from "https://www.gstatic.com/firebasejs/9.24.0/firebase-app.js";
+-  import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/9.24.0/firebase-auth.js";
+-  import { getFirestore, collection, query, orderBy, getDocs, doc, getDoc } from "https://www.gstatic.com/firebasejs/9.24.0/firebase-firestore.js";
+-
+-  const firebaseConfig = {
+-    apiKey: "AIzaSyAs8Ee4DFiPXq3o8UgCgrLFKmLECmxiuyc",
+-    authDomain: "swadeshi-b73c1.firebaseapp.com",
+-    projectId: "swadeshi-b73c1",
+-    storageBucket: "swadeshi-b73c1.appspot.com",
+-    messagingSenderId: "976631330768",
+-    appId: "1:976631330768:web:addc77ae3062dee1a9abd5"
+-  };
+-  const app = initializeApp(firebaseConfig);
+-  const auth = getAuth(app);
+-  const db = getFirestore(app);
+-
+-  // UI refs
+-  const authBtn = document.getElementById('auth-btn');
+-  const cartCountEl = document.getElementById('cart-count');
+-  const productsGrid = document.getElementById('products-grid');
+-  const searchInput = document.getElementById('search');
+-
+-  // CART helpers (localStorage)
+-  const CART_KEY = 'swadeshi_cart';
+-  function getCart(){ try { return JSON.parse(localStorage.getItem(CART_KEY)) || []; } catch { return []; } }
+-  function saveCart(c){ localStorage.setItem(CART_KEY, JSON.stringify(c)); updateCartCount(); }
+-  function updateCartCount(){ const c = getCart(); const qty = c.reduce((s,i)=>s+i.qty,0); cartCountEl.textContent = qty; }
+-
+-  // AUTH UI
+-  onAuthStateChanged(auth, user => {
+-    if(!user){
+-      authBtn.textContent = 'Login';
+-      authBtn.onclick = ()=> window.location.href='login.html';
+-    } else {
+-      authBtn.textContent = 'Logout';
+-      authBtn.onclick = async ()=> { await signOut(auth); location.reload(); };
+-    }
+-  });
+-
+-  // Load products from Firestore
+-  async function loadProducts(){
+-    productsGrid.innerHTML = `<p class="col-span-3 text-center text-gray-500">Loading...</p>`;
+-    try {
+-      const q = query(collection(db,'products'), orderBy('createdAt','desc'));
+-      const snap = await getDocs(q);
+-      productsGrid.innerHTML = '';
+-      snap.forEach(d=>{
+-        const p = d.data();
+-        const id = d.id;
+-        const img = (p.images && p.images.length) ? p.images[0] : 'https://via.placeholder.com/400?text=No+Image';
+-        const card = document.createElement('div');
+-        card.className = 'bg-white rounded-xl shadow p-4';
+-        card.innerHTML = `
+-          <img src="${img}" alt="${p.name}" class="h-44 w-full object-cover rounded mb-3">
+-          <h3 class="font-semibold text-lg">${escapeHtml(p.name)}</h3>
+-          <p class="text-gray-600 mt-1">${escapeHtml((p.description||'').slice(0,80))}${(p.description||'').length>80?'...':''}</p>
+-          <div class="mt-3 flex items-center justify-between">
+-            <div class="font-bold text-[var(--primary)]">₹${p.price||0}</div>
+-            <div class="flex gap-2">
+-              <button data-id="${id}" class="viewBtn px-3 py-1 border rounded">View</button>
+-              <button data-id="${id}" class="addBtn btn-primary px-3 py-1 rounded">Add</button>
+-            </div>
+-          </div>
+-        `;
+-        productsGrid.appendChild(card);
+-      });
+-
+-      // attach handlers
+-      document.querySelectorAll('.viewBtn').forEach(b=>b.addEventListener('click', e=>{
+-        const id = e.currentTarget.dataset.id;
+-        window.location.href = `product.html?id=${id}`;
+-      }));
+-
+-      document.querySelectorAll('.addBtn').forEach(b=>b.addEventListener('click', async (e)=>{
+-        const id = e.currentTarget.dataset.id;
+-        await addToCartById(id);
+-      }));
+-
+-    } catch(err){
+-      console.error('Load products error', err);
+-      productsGrid.innerHTML = `<p class="col-span-3 text-center text-red-600">Failed to load products.</p>`;
+-    }
+-  }
+-
+-  // add product by id to cart (fetch from Firestore directly)
+-  async function addToCartById(id){
+-    try{
+-      const docSnap = await getDoc(doc(db,'products', id));
+-      if(!docSnap.exists()){ alert('Product not found'); return; }
+-      const p = docSnap.data();
+-      const cart = getCart();
+-      const existing = cart.find(i=>i.id===id);
+-      if(existing){ existing.qty += 1; } else { cart.push({ id, name:p.name, price:p.price, sellerId:p.sellerId, qty:1, img: (p.images&&p.images[0])||'' }); }
+-      saveCart(cart);
+-      toast('Added to cart');
+-    }catch(err){
+-      console.error(err);
+-      alert('Could not add to cart');
+-    }
+-  }
+-
+-  // small toast
+-  function toast(msg){
+-    const t = document.createElement('div');
+-    t.textContent = msg;
+-    t.className = 'fixed bottom-20 right-6 bg-[var(--dark)] text-white px-4 py-2 rounded shadow z-50';
+-    document.body.appendChild(t);
+-    setTimeout(()=> t.remove(),2000);
+-  }
+-
+-  // search filter
+-  searchInput.addEventListener('input', ()=>{
+-    const q = searchInput.value.trim().toLowerCase();
+-    Array.from(productsGrid.children).forEach(card=>{
+-      const title = card.querySelector('h3').textContent.toLowerCase();
+-      const desc = card.querySelector('p').textContent.toLowerCase();
+-      card.style.display = (title.includes(q) || desc.includes(q)) ? '' : 'none';
+-    });
+-  });
+-
+-  // category chips (basic)
+-  document.querySelectorAll('.category-chip').forEach(btn=>{
+-    btn.addEventListener('click', async ()=>{
+-      const cat = btn.textContent.trim();
+-      productsGrid.innerHTML = `<p class="text-center col-span-3">Loading ${cat}...</p>`;
+-      try{
+-        const q = query(collection(db,'products'), orderBy('createdAt','desc'));
+-        const snap = await getDocs(q);
+-        productsGrid.innerHTML = '';
+-        snap.forEach(d=>{
+-          const p = d.data();
+-          if(p.category && p.category.toLowerCase()===cat.toLowerCase()){
+-            const id = d.id;
+-            const img = (p.images && p.images.length) ? p.images[0] : 'https://via.placeholder.com/400?text=No+Image';
+-            const card = document.createElement('div');
+-            card.className = 'bg-white rounded-xl shadow p-4';
+-            card.innerHTML = `
+-              <img src="${img}" alt="${p.name}" class="h-44 w-full object-cover rounded mb-3">
+-              <h3 class="font-semibold text-lg">${escapeHtml(p.name)}</h3>
+-              <p class="text-gray-600 mt-1">${escapeHtml((p.description||'').slice(0,80))}${(p.description||'').length>80?'...':''}</p>
+-              <div class="mt-3 flex items-center justify-between">
+-                <div class="font-bold text-[var(--primary)]">₹${p.price||0}</div>
+-                <div class="flex gap-2">
+-                  <button data-id="${id}" class="viewBtn px-3 py-1 border rounded">View</button>
+-                  <button data-id="${id}" class="addBtn btn-primary px-3 py-1 rounded">Add</button>
+-                </div>
+-              </div>
+-            `;
+-            productsGrid.appendChild(card);
+-          }
+-        });
+-        // reattach handlers
+-        document.querySelectorAll('.viewBtn').forEach(b=>b.addEventListener('click', e=> window.location.href = `product.html?id=${e.currentTarget.dataset.id}`));
+-        document.querySelectorAll('.addBtn').forEach(b=>b.addEventListener('click', e=> addToCartById(e.currentTarget.dataset.id)));
+-      }catch(err){
+-        console.error(err);
+-        productsGrid.innerHTML = `<p class="text-center text-red-600">Load failed</p>`;
+-      }
+-    });
+-  });
+-
+-  // helpers
+-  function escapeHtml(s){ if(!s) return ''; return String(s).replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;'); }
+-
+-  // initial
+-  updateCartCount();
+-  loadProducts();
+-
+-  // chatbot toggle
+-  document.getElementById('chatbotBtn').addEventListener('click', ()=> document.getElementById('chatbotWindow').classList.toggle('hidden'));
+-  document.getElementById('closeChat').addEventListener('click', ()=> document.getElementById('chatbotWindow').classList.add('hidden'));
+-
+-</script>
+-
+-</body>
+-</html>
+diff --git a/.vscode/launch.json b/.vscode/launch.json
+deleted file mode 100644
+index 2ba986f..0000000
+--- a/.vscode/launch.json
++++ /dev/null
+@@ -1,15 +0,0 @@
+-{
+-    // Use IntelliSense to learn about possible attributes.
+-    // Hover to view descriptions of existing attributes.
+-    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+-    "version": "0.2.0",
+-    "configurations": [
+-        {
+-            "type": "chrome",
+-            "request": "launch",
+-            "name": "Launch Chrome against localhost",
+-            "url": "http://localhost:8080",
+-            "webRoot": "${workspaceFolder}"
+-        }
+-    ]
+-}
+\ No newline at end of file
+diff --git a/.vscode/order-success.html b/.vscode/order-success.html
+deleted file mode 100644
+index 9d2d2d7..0000000
+--- a/.vscode/order-success.html
++++ /dev/null
+@@ -1,58 +0,0 @@
+-<!doctype html>
+-<html lang="en">
+-<head>
+-  <meta charset="utf-8" />
+-  <meta name="viewport" content="width=device-width,initial-scale=1" />
+-  <title>Order Success — Swadeshi</title>
+-  <script src="https://cdn.tailwindcss.com"></script>
+-  <style> :root{--primary:#8b5a2b;} body{ font-family: Inter, sans-serif; background:#f7f2ea; } .card{ max-width:720px; } </style>
+-</head>
+-<body class="min-h-screen flex items-center justify-center">
+-
+-  <div class="bg-white p-8 rounded-xl shadow card text-center">
+-    <h1 class="text-2xl font-bold mb-3 text-[var(--primary)]">Thank you for your order!</h1>
+-    <p class="mb-4" id="msg">Fetching order details…</p>
+-    <a href="customer-home.html" class="px-6 py-2 bg-[#8b5a2b] text-white rounded">Continue shopping</a>
+-  </div>
+-
+-<script type="module">
+-  import { initializeApp } from "https://www.gstatic.com/firebasejs/9.24.0/firebase-app.js";
+-  import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/9.24.0/firebase-firestore.js";
+-
+-  const firebaseConfig = {
+-    apiKey: "AIzaSyAs8Ee4DFiPXq3o8UgCgrLFKmLECmxiuyc",
+-    authDomain: "swadeshi-b73c1.firebaseapp.com",
+-    projectId: "swadeshi-b73c1",
+-    storageBucket: "swadeshi-b73c1.appspot.com",
+-    messagingSenderId: "976631330768",
+-    appId: "1:976631330768:web:addc77ae3062dee1a9abd5"
+-  };
+-  const app = initializeApp(firebaseConfig);
+-  const db = getFirestore(app);
+-
+-  function getParam(name){
+-    const u = new URL(location.href);
+-    return u.searchParams.get(name);
+-  }
+-
+-  async function load(){
+-    const id = getParam('id');
+-    const p = document.getElementById('msg');
+-    if(!id){ p.textContent = 'No order id provided.'; return; }
+-
+-    try{
+-      const snap = await getDoc(doc(db,'orders', id));
+-      if(!snap.exists()){ p.textContent = `Order placed (ID: ${id}).` ; return; }
+-      const o = snap.data();
+-      p.innerHTML = `Order <strong>#${id}</strong> placed on <strong>${new Date(o.date).toLocaleString()}</strong>.<br>Total: <strong>₹${o.totalAmount}</strong><br>Status: <strong>${o.orderStatus}</strong>`;
+-    }catch(err){
+-      console.error(err);
+-      p.textContent = `Order placed (ID: ${id}).`;
+-    }
+-  }
+-
+-  load();
+-</script>
+-
+-</body>
+-</html>
+diff --git a/.vscode/product.html b/.vscode/product.html
+deleted file mode 100644
+index 7911598..0000000
+--- a/.vscode/product.html
++++ /dev/null
+@@ -1,113 +0,0 @@
+-<!doctype html>
+-<html lang="en">
+-<head>
+-  <meta charset="utf-8" />
+-  <meta name="viewport" content="width=device-width,initial-scale=1" />
+-  <title>Product — Swadeshi</title>
+-  <script src="https://cdn.tailwindcss.com"></script>
+-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&family=Playfair+Display:wght@400;600&display=swap" rel="stylesheet">
+-  <style>
+-    :root{ --primary:#8b5a2b; --light:#f8f3e9; --dark:#3c2f28; }
+-    body { font-family:'Poppins',sans-serif; background:var(--light); color:var(--dark); }
+-    h1,h2{ font-family:'Playfair Display',serif; }
+-  </style>
+-</head>
+-<body class="min-h-screen">
+-
+-  <nav class="fixed top-0 left-0 right-0 bg-white shadow px-6 py-4 z-40">
+-    <div class="max-w-6xl mx-auto flex items-center justify-between">
+-      <a href="index.html" class="text-2xl font-bold text-[var(--primary)]">SWADESHI</a>
+-      <div>
+-        <a href="customer-home.html" class="mr-4">Home</a>
+-        <a href="cart.html">Cart</a>
+-      </div>
+-    </div>
+-  </nav>
+-
+-  <main class="pt-24 max-w-6xl mx-auto px-6">
+-    <div id="product-wrap" class="bg-white rounded-xl p-6 shadow">
+-      <p class="text-center text-gray-500">Loading product…</p>
+-    </div>
+-  </main>
+-
+-<script type="module">
+-  import { initializeApp } from "https://www.gstatic.com/firebasejs/9.24.0/firebase-app.js";
+-  import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/9.24.0/firebase-firestore.js";
+-
+-  const firebaseConfig = {
+-    apiKey: "AIzaSyAs8Ee4DFiPXq3o8UgCgrLFKmLECmxiuyc",
+-    authDomain: "swadeshi-b73c1.firebaseapp.com",
+-    projectId: "swadeshi-b73c1",
+-    storageBucket: "swadeshi-b73c1.appspot.com",
+-    messagingSenderId: "976631330768",
+-    appId: "1:976631330768:web:addc77ae3062dee1a9abd5"
+-  };
+-  const app = initializeApp(firebaseConfig);
+-  const db = getFirestore(app);
+-
+-  const wrap = document.getElementById('product-wrap');
+-
+-  function getParam(name){
+-    const u = new URL(location.href);
+-    return u.searchParams.get(name);
+-  }
+-
+-  async function loadProduct(){
+-    const id = getParam('id');
+-    if(!id) { wrap.innerHTML = '<p class="text-red-600">No product id provided.</p>'; return; }
+-
+-    try{
+-      const pSnap = await getDoc(doc(db,'products', id));
+-      if(!pSnap.exists()){ wrap.innerHTML = '<p class="text-red-600">Product not found.</p>'; return; }
+-      const p = pSnap.data();
+-      const imgs = p.images && p.images.length ? p.images : ['https://via.placeholder.com/600x400?text=No+Image'];
+-
+-      wrap.innerHTML = `
+-        <div class="grid md:grid-cols-2 gap-6">
+-          <div>
+-            <img id="mainImg" src="${imgs[0]}" class="w-full h-96 object-cover rounded" />
+-            <div class="flex gap-2 mt-3">
+-              ${imgs.map((u,i)=>`<img src="${u}" data-index="${i}" class="w-20 h-16 object-cover rounded cursor-pointer border">`).join('')}
+-            </div>
+-          </div>
+-          <div>
+-            <h1 class="text-2xl font-bold text-[var(--primary)]">${(p.name||'')}</h1>
+-            <p class="text-gray-600 mt-2">${(p.description||'')}</p>
+-            <div class="mt-4">
+-              <div class="text-2xl font-bold text-[var(--primary)]">₹${p.price}</div>
+-              <div class="text-sm text-gray-500">Stock: ${p.stock || 0}</div>
+-            </div>
+-            <div class="mt-6 flex gap-3">
+-              <button id="addToCart" class="bg-[var(--primary)] text-white px-4 py-2 rounded">Add to Cart</button>
+-              <a href="cart.html" class="px-4 py-2 border rounded">Go to Cart</a>
+-            </div>
+-          </div>
+-        </div>
+-      `;
+-
+-      // click thumbnails
+-      wrap.querySelectorAll('img[data-index]').forEach(img=>{
+-        img.addEventListener('click', e=>{
+-          document.getElementById('mainImg').src = e.currentTarget.src;
+-        });
+-      });
+-
+-      document.getElementById('addToCart').addEventListener('click', async ()=>{
+-        const cart = JSON.parse(localStorage.getItem('swadeshi_cart')||'[]');
+-        const existing = cart.find(x=>x.id===id);
+-        if(existing) existing.qty += 1; else cart.push({ id, name:p.name, price:p.price, qty:1, sellerId:p.sellerId, img: imgs[0] });
+-        localStorage.setItem('swadeshi_cart', JSON.stringify(cart));
+-        alert('Added to cart');
+-      });
+-
+-    }catch(err){
+-      console.error(err);
+-      wrap.innerHTML = '<p class="text-red-600">Failed to load product.</p>';
+-    }
+-  }
+-
+-  loadProduct();
+-</script>
+-
+-</body>
+-</html>
+diff --git a/Kalakritib.html b/Kalakritib.html
+index 1b31b69..3697566 100644
+--- a/Kalakritib.html
++++ b/Kalakritib.html
+@@ -3,7 +3,7 @@
+ <head>
+     <meta charset="UTF-8">
+     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+-    <title>Swadeshi</title>
++    <title>Kalakriti</title>
+     <link rel="stylesheet" href="">
+     <!-- Tailwind CSS CDN -->
+     <script src="https://cdn.tailwindcss.com"></script>
+diff --git a/canvas.js b/canvas.js
+new file mode 100644
+index 0000000..ff4d72e
+--- /dev/null
++++ b/canvas.js
+@@ -0,0 +1,207 @@
++// canvas.js — stable frontend canvas logic
++document.addEventListener("DOMContentLoaded", () => {
++
++  const fileInput = document.getElementById("product-image");
++  const chooseFileBtn = document.getElementById("choose-file-btn");
++  const dropzone = document.getElementById("product-dropzone");
++  const promptInput = document.getElementById("design-prompt");
++  const generateBtn = document.getElementById("generate-canvas");
++  const strengthInput = document.getElementById("canvas-strength");
++  const styleSelect = document.getElementById("canvas-style");
++
++  const imagePreview = document.getElementById("image-preview");
++  const previewImg = document.getElementById("preview-img");
++  const previewName = document.getElementById("preview-name");
++  const removePreview = document.getElementById("remove-preview");
++
++  const resultWrap = document.getElementById("canvas-result");
++  const enhancedImg = document.getElementById("enhanced-image");
++  const processingCanvas = document.getElementById("processing-canvas");
++  const statusEl = document.getElementById("canvas-status");
++
++  let selectedImageURL = null;
++
++  /* ---------------- FILE PICKER ---------------- */
++  chooseFileBtn.addEventListener("click", () => fileInput.click());
++
++  fileInput.addEventListener("change", () => {
++    const file = fileInput.files[0];
++    if (!file) return;
++
++    const reader = new FileReader();
++    reader.onload = () => {
++      previewImg.src = reader.result;
++      previewName.textContent = file.name;
++      imagePreview.classList.remove("hidden");
++      selectedImageURL = reader.result;
++    };
++    reader.readAsDataURL(file);
++  });
++
++  /* ---------------- DROPZONE ---------------- */
++  dropzone.addEventListener("click", (e) => {
++    if (e.target === dropzone) fileInput.click();
++  });
++
++  dropzone.addEventListener("dragover", (e) => {
++    e.preventDefault();
++    dropzone.classList.add("border-[var(--primary-color)]");
++  });
++
++  dropzone.addEventListener("dragleave", () => {
++    dropzone.classList.remove("border-[var(--primary-color)]");
++  });
++
++  dropzone.addEventListener("drop", (e) => {
++    e.preventDefault();
++    dropzone.classList.remove("border-[var(--primary-color)]");
++    const file = e.dataTransfer.files[0];
++    if (!file) return;
++
++    const reader = new FileReader();
++    reader.onload = () => {
++      previewImg.src = reader.result;
++      previewName.textContent = file.name;
++      imagePreview.classList.remove("hidden");
++      selectedImageURL = reader.result;
++    };
++    reader.readAsDataURL(file);
++  });
++
++  removePreview.addEventListener("click", () => {
++    fileInput.value = "";
++    imagePreview.classList.add("hidden");
++    previewImg.src = "#";
++    selectedImageURL = null;
++  });
++
++  /* ---------------- LOCAL ENHANCEMENT ---------------- */
++  function enhanceImage(img, strength, style) {
++    const canvas = processingCanvas;
++    const ctx = canvas.getContext("2d");
++
++    canvas.width = img.width;
++    canvas.height = img.height;
++    ctx.drawImage(img, 0, 0);
++
++    ctx.filter =
++      style === "vintage"
++        ? `contrast(${100 + strength}%) saturate(${80}%) sepia(30%)`
++        : style === "artistic"
++        ? `contrast(${100 + strength}%) saturate(${120 + strength}%)`
++        : `contrast(${100 + strength}%)`;
++
++    ctx.drawImage(img, 0, 0);
++    return canvas.toDataURL("image/jpeg", 0.9);
++  }
++
++  /* ---------------- PROMPT PARSING & SIMULATION ---------------- */
++  function parsePromptAdjustments(prompt) {
++    const p = (prompt || '').toLowerCase();
++    const adj = { brightness: 0, contrast: 0, saturate: 0, tint: null, vintage: false, text: null };
++    if (/bright|brighter|brighten/.test(p)) adj.brightness += 15;
++    if (/dark|darker/.test(p)) adj.brightness -= 15;
++    if (/vivid|vibrant|festive/.test(p)) adj.saturate += 25;
++    if (/muted|desaturate|soft/.test(p)) adj.saturate -= 25;
++    if (/vintage|retro|sepia/.test(p)) { adj.vintage = true; adj.saturate -= 10; adj.brightness -= 5; }
++    if (/warm|warmth|gold|orange/.test(p)) adj.tint = { r: 255, g: 150, b: 50, a: 0.07 };
++    if (/cool|blue|cooler/.test(p)) adj.tint = { r: 60, g: 120, b: 255, a: 0.06 };
++    const textMatch = prompt.match(/text[:=]\s*['"]([^'"]+)['"]/i) || prompt.match(/with text ['"]([^'"]+)['"]/i);
++    if (textMatch) adj.text = textMatch[1];
++    return adj;
++  }
++
++  function simulatePromptEffect(img, prompt, strength = 50, style = 'natural') {
++    const canvas = processingCanvas;
++    const ctx = canvas.getContext('2d');
++    canvas.width = img.width;
++    canvas.height = img.height;
++
++    // base draw
++    ctx.clearRect(0, 0, canvas.width, canvas.height);
++    ctx.drawImage(img, 0, 0);
++
++    const adj = parsePromptAdjustments(prompt);
++
++    // compute CSS-like filter parameters
++    const b = 1 + (adj.brightness / 100) + ((strength - 50) / 400);
++    const c = 1 + ((strength - 50) / 180);
++    const s = 1 + (adj.saturate / 100) + (style === 'artistic' ? 0.15 : 0);
++
++    // apply filters by drawing to an offscreen canvas with ctx.filter
++    const tmp = document.createElement('canvas');
++    tmp.width = canvas.width; tmp.height = canvas.height;
++    const tctx = tmp.getContext('2d');
++    tctx.filter = `brightness(${b}) contrast(${c}) saturate(${s})`;
++    tctx.drawImage(canvas, 0, 0);
++
++    // copy back
++    ctx.clearRect(0, 0, canvas.width, canvas.height);
++    ctx.drawImage(tmp, 0, 0);
++
++    // vintage/sepia tint
++    if (adj.vintage) {
++      ctx.globalCompositeOperation = 'color';
++      ctx.fillStyle = 'rgba(112,66,20,0.06)';
++      ctx.fillRect(0, 0, canvas.width, canvas.height);
++      ctx.globalCompositeOperation = 'source-over';
++    }
++
++    // color tint overlay
++    if (adj.tint) {
++      ctx.fillStyle = `rgba(${adj.tint.r},${adj.tint.g},${adj.tint.b},${adj.tint.a})`;
++      ctx.fillRect(0, 0, canvas.width, canvas.height);
++    }
++
++    // prompt text overlay (if requested)
++    if (adj.text) {
++      const fontSize = Math.max(18, Math.floor(canvas.width / 22));
++      ctx.font = `${fontSize}px 'Playfair Display', serif`;
++      ctx.textAlign = 'center';
++      ctx.fillStyle = 'rgba(255,255,255,0.92)';
++      ctx.fillText(adj.text, canvas.width / 2, canvas.height - fontSize - 16);
++      ctx.strokeStyle = 'rgba(0,0,0,0.3)';
++      ctx.lineWidth = 2;
++      ctx.strokeText(adj.text, canvas.width / 2, canvas.height - fontSize - 16);
++    }
++
++    return canvas.toDataURL('image/jpeg', 0.92);
++  }
++
++  /* ---------------- GENERATE ---------------- */
++  generateBtn.addEventListener('click', async () => {
++    if (!selectedImageURL) { alert('Upload an image first'); return; }
++
++    const mode = document.querySelector('input[name="canvas-mode"]:checked')?.value || 'local';
++    const prompt = promptInput.value.trim();
++    const strength = Number(strengthInput.value);
++    const style = styleSelect.value;
++
++    statusEl.textContent = mode === 'ai' ? 'Generating AI (simulated)…' : 'Processing…';
++
++    const img = new Image();
++    img.crossOrigin = 'anonymous';
++    img.onload = async () => {
++      try {
++        if (mode === 'local') {
++          const result = enhanceImage(img, strength, style);
++          enhancedImg.src = result;
++          statusEl.textContent = 'Done ✅';
++        } else {
++          // AI mode — simulate prompt effects client-side immediately
++          const simulated = simulatePromptEffect(img, prompt, strength, style);
++          enhancedImg.src = simulated;
++          statusEl.textContent = 'Simulated AI result (no backend configured)';
++        }
++        resultWrap.classList.remove('hidden');
++      } catch (err) {
++        console.error('Generate error', err);
++        alert('Generation failed — see console');
++        statusEl.textContent = 'Idle';
++      }
++    };
++    img.onerror = () => { alert('Could not load image for processing'); statusEl.textContent = 'Idle'; };
++    img.src = selectedImageURL;
++  });
++
++});
+diff --git a/cart.html b/cart.html
+index d1606e8..2dfb6b1 100644
+--- a/cart.html
++++ b/cart.html
+@@ -20,7 +20,7 @@
+   </nav>
+ 
+   <main class="pt-24 max-w-4xl mx-auto px-6">
+-    <h1 class="text-2xl font-semibold mb-4">Your Cart</h1>
++    <h1 class="text-2xl font-semibold mb-4" data-i18n="cart.title">Your Cart</h1>
+ 
+     <div id="cart-wrap" class="bg-white p-6 rounded-xl shadow">
+       <p id="emptyMsg" class="text-gray-500">Loading cart...</p>
+@@ -34,117 +34,103 @@
+             <div id="subtotal" class="text-2xl font-bold text-[var(--primary)]">₹0</div>
+           </div>
+           <div>
+-            <button id="btnCheckout" class="bg-[var(--primary)] text-white px-5 py-3 rounded">Checkout</button>
++            <a href="order-success.html"><button id="btnCheckout" class="bg-[var(--primary)] text-white px-5 py-3 rounded" data-i18n="cart.checkout">Checkout</button></a>
+           </div>
+         </div>
+       </div>
+     </div>
+   </main>
+ 
+-<script type="module">
+-  import { initializeApp } from "https://www.gstatic.com/firebasejs/9.24.0/firebase-app.js";
+-  import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.24.0/firebase-auth.js";
+-  import { getFirestore, collection, addDoc } from "https://www.gstatic.com/firebasejs/9.24.0/firebase-firestore.js";
+-
+-  const firebaseConfig = {
+-    apiKey: "AIzaSyAs8Ee4DFiPXq3o8UgCgrLFKmLECmxiuyc",
+-    authDomain: "swadeshi-b73c1.firebaseapp.com",
+-    projectId: "swadeshi-b73c1",
+-    storageBucket: "swadeshi-b73c1.appspot.com",
+-    messagingSenderId: "976631330768",
+-    appId: "1:976631330768:web:addc77ae3062dee1a9abd5"
+-  };
+-  const app = initializeApp(firebaseConfig);
+-  const auth = getAuth(app);
+-  const db = getFirestore(app);
+-
+-  const itemsEl = document.getElementById('items');
+-  const emptyMsg = document.getElementById('emptyMsg');
+-  const checkoutPanel = document.getElementById('checkoutPanel');
+-  const subtotalEl = document.getElementById('subtotal');
+-  const btnCheckout = document.getElementById('btnCheckout');
+-
+-  function getCart(){ try { return JSON.parse(localStorage.getItem('swadeshi_cart')) || []; } catch { return []; } }
+-  function saveCart(c){ localStorage.setItem('swadeshi_cart', JSON.stringify(c)); renderCart(); }
+-
+-  function renderCart(){
++<script src="translations.js"></script>
++<script src="i18n.js"></script>
++
++<script>
++/* ---------- CART HELPERS ---------- */
++function getCart(){ 
++    try { return JSON.parse(localStorage.getItem('swadeshi_cart')) || []; } 
++    catch { return []; } 
++}
++
++function saveCart(c){ 
++    localStorage.setItem('swadeshi_cart', JSON.stringify(c)); 
++    renderCart(); 
++}
++
++/* ---------- RENDER CART ---------- */
++function renderCart(){
+     const cart = getCart();
+-    if(!cart.length){ emptyMsg.textContent = 'Your cart is empty.'; itemsEl.innerHTML=''; checkoutPanel.classList.add('hidden'); return; }
++    const itemsEl = document.getElementById("items");
++    const emptyMsg = document.getElementById("emptyMsg");
++    const checkoutPanel = document.getElementById("checkoutPanel");
++    const subtotalEl = document.getElementById("subtotal");
++
++    if(!cart.length){ 
++        emptyMsg.textContent = i18n.t('cart.empty_message'); 
++        itemsEl.innerHTML=''; 
++        checkoutPanel.classList.add('hidden'); 
++        return; 
++    }
++
+     emptyMsg.textContent = '';
+     itemsEl.innerHTML = '';
++
+     let subtotal = 0;
+-    cart.forEach((it, idx)=>{
+-      subtotal += (it.price||0) * it.qty;
+-      const row = document.createElement('div');
+-      row.className = 'flex items-center gap-4';
+-      row.innerHTML = `
+-        <img src="${it.img||'https://via.placeholder.com/100'}" class="w-24 h-20 object-cover rounded">
+-        <div class="flex-1">
+-          <div class="font-semibold">${it.name}</div>
+-          <div class="text-sm text-gray-600">₹${it.price}</div>
+-          <div class="mt-2 flex items-center gap-2">
+-            <button data-idx="${idx}" class="dec px-2 py-1 border rounded">-</button>
+-            <span>${it.qty}</span>
+-            <button data-idx="${idx}" class="inc px-2 py-1 border rounded">+</button>
+-            <button data-idx="${idx}" class="remove ml-4 text-red-600">Remove</button>
++
++    cart.forEach((item, idx)=>{
++        subtotal += item.price * item.qty;
++
++        itemsEl.innerHTML += `
++          <div class="flex items-center gap-4">
++            <img src="${item.img || 'https://via.placeholder.com/96x80?text=No+Image'}" class="w-24 h-20 object-cover rounded" onerror="this.src='https://via.placeholder.com/96x80?text=No+Image'">
++            <div class="flex-1">
++              <div class="font-semibold">${item.name}</div>
++              <div class="text-sm text-gray-600">₹${item.price}</div>
++
++              <div class="mt-2 flex items-center gap-2">
++                <button class="dec px-2 py-1 border rounded" data-idx="${idx}">-</button>
++                <span>${item.qty}</span>
++                <button class="inc px-2 py-1 border rounded" data-idx="${idx}">+</button>
++                <button class="remove text-red-600 ml-4" data-idx="${idx}">Remove</button>
++              </div>
++            </div>
+           </div>
+-        </div>
+-      `;
+-      itemsEl.appendChild(row);
++        `;
+     });
+-    subtotalEl.textContent = '₹' + subtotal;
+-    checkoutPanel.classList.remove('hidden');
+-
+-    // attach handlers
+-    document.querySelectorAll('.inc').forEach(b=>b.addEventListener('click', e=>{
+-      const i = +e.currentTarget.dataset.idx; const cart = getCart(); cart[i].qty += 1; saveCart(cart);
+-    }));
+-    document.querySelectorAll('.dec').forEach(b=>b.addEventListener('click', e=>{
+-      const i = +e.currentTarget.dataset.idx; const cart = getCart(); if(cart[i].qty>1) cart[i].qty -= 1; else cart.splice(i,1); saveCart(cart);
+-    }));
+-    document.querySelectorAll('.remove').forEach(b=>b.addEventListener('click', e=>{
+-      const i = +e.currentTarget.dataset.idx; const cart = getCart(); cart.splice(i,1); saveCart(cart);
+-    }));
+-  }
+-
+-  btnCheckout.addEventListener('click', async ()=>{
+-    const cart = getCart();
+-    if(!cart.length){ alert('Your cart is empty'); return; }
+ 
+-    // ensure user signed in (checkout requires auth)
+-    const user = await new Promise(resolve=>{
+-      const unsub = onAuthStateChanged(auth, u=>{ unsub(); resolve(u); });
++    subtotalEl.textContent = "₹" + subtotal;
++    checkoutPanel.classList.remove("hidden");
++
++    /* buttons */
++    document.querySelectorAll(".inc").forEach(btn => {
++        btn.onclick = e => {
++            const i = +e.target.dataset.idx;
++            const cart = getCart();
++            cart[i].qty++;
++            saveCart(cart);
++        };
+     });
+ 
+-    if(!user){
+-      if(confirm('Please login to checkout. Go to login page?')) window.location.href='login.html';
+-      return;
+-    }
++    document.querySelectorAll(".dec").forEach(btn => {
++        btn.onclick = e => {
++            const i = +e.target.dataset.idx;
++            const cart = getCart();
++            if (cart[i].qty > 1) cart[i].qty--;
++            else cart.splice(i,1);
++            saveCart(cart);
++        };
++    });
+ 
+-    // build order payload
+-    const items = cart.map(i=>({ productId: i.id, name:i.name, qty:i.qty, price:i.price, sellerId: i.sellerId }));
+-    const total = items.reduce((s,it)=> s + (it.price||0)*it.qty, 0);
+-
+-    try {
+-      const orderDoc = {
+-        customerId: user.uid,
+-        customerName: user.displayName || user.email || '',
+-        items,
+-        totalAmount: total,
+-        orderStatus: 'Processing',
+-        date: new Date().toISOString()
+-      };
+-      const ref = await addDoc(collection(db,'orders'), orderDoc);
+-      localStorage.removeItem('swadeshi_cart'); // clear cart
+-      window.location.href = `order-success.html?id=${ref.id}`;
+-    } catch(err){
+-      console.error('Checkout failed', err);
+-      alert('Checkout failed.');
+-    }
+-  });
++    document.querySelectorAll(".remove").forEach(btn => {
++        btn.onclick = e => {
++            const i = +e.target.dataset.idx;
++            const cart = getCart();
++            cart.splice(i,1);
++            saveCart(cart);
++        };
++    });
++}
+ 
+-  // initial render
+-  renderCart();
++renderCart();
+ </script>
+ 
+ </body>
+diff --git a/customer-home.html b/customer-home.html
+index 51a561b..ad0afc6 100644
+--- a/customer-home.html
++++ b/customer-home.html
+@@ -9,13 +9,18 @@
+   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&family=Playfair+Display:wght@400;600&display=swap" rel="stylesheet">
+ 
+   <style>
+-    :root{
+-      --primary:#8b5a2b; --accent:#d4af37; --light:#f8f3e9; --dark:#3c2f28;
++    :root {
++      --primary: #8b5a2b;
++      --accent: #d4af37;
++      --light: #f8f3e9;
++      --dark: #3c2f28;
+     }
+-    body { font-family: 'Poppins', sans-serif; background:var(--light); color:var(--dark); }
++    body { font-family: 'Poppins', sans-serif; background: var(--light); color: var(--dark); }
+     h1,h2,h3 { font-family:'Playfair Display', serif; }
+-    .btn-primary { background:var(--primary); color:white; }
+-    .btn-outline { border:2px solid var(--primary); color:var(--primary); }
++    .btn-primary { background: var(--primary); color: white; }
++    .btn-outline { border: 2px solid var(--primary); color: var(--primary); }
++    .category-chip:hover { transform: scale(1.05); transition: 0.2s; cursor: pointer; }
++    .product-card:hover { transform: translateY(-3px); transition: 0.2s; }
+   </style>
+ </head>
+ <body class="min-h-screen">
+@@ -23,63 +28,108 @@
+   <!-- NAV -->
+   <nav class="fixed top-0 left-0 right-0 bg-white shadow px-6 py-4 z-40">
+     <div class="max-w-6xl mx-auto flex items-center justify-between">
+-      <a class="text-2xl font-bold text-[var(--primary)]"><span class="text-[var(--accent)]">SWAD</span>ESHI</a>
++      <a class="text-2xl font-bold text-[var(--primary)]" data-i18n="footer.name"><span class="text-[var(--accent)]">SWAD</span>ESHI</a>
+       <div class="flex items-center gap-4">
+-        <a href="index.html" class="text-sm">Home</a>
+-        <a href="#shop" class="text-sm">Shop</a>
+-        <a id="cart-link" href="cart.html" class="text-sm">Cart (<span id="cart-count">0</span>)</a>
+-        <button id="auth-btn" class="btn-primary px-4 py-1 rounded-full">Login</button>
++        <a href="index.html" class="text-sm" data-i18n="nav.home">Home</a>
++        <a href="#shop" class="text-sm" data-i18n="nav.shop">Shop</a>
++        <a href="cart.html" class="text-sm"><span data-i18n="cart.title">Cart</span> (<span id="cart-count">0</span>)</a>
++        <button id="auth-btn" class="btn-primary px-4 py-1 rounded-full" data-i18n="login.login">Login</button>
+       </div>
+     </div>
+   </nav>
+ 
+   <!-- HERO -->
+-  <section class="pt-24 pb-10">
+-    <div class="max-w-6xl mx-auto px-6 grid md:grid-cols-2 gap-6 items-center">
+-      <div>
+-        <h1 class="text-5xl font-bold text-[var(--primary)]">Handmade for home — crafted by local artisans</h1>
+-        <p class="mt-4 text-lg text-gray-700 max-w-xl">Discover unique, sustainable pieces — pottery, sarees, toys and more. Shop directly from makers.</p>
+-        <div class="mt-6 flex gap-3">
+-          <a href="#shop" class="btn-primary px-6 py-3 rounded-full">Shop Now</a>
+-          <a href="seller-dashboard.html" class="btn-outline px-6 py-3 rounded-full">Sell on Swadeshi</a>
+-        </div>
+-      </div>
+-      <div class="hidden md:block">
+-        <img src="https://images.unsplash.com/photo-1589100029763-602428cb5c59?auto=format&fit=crop&w=900&q=60" class="rounded-lg shadow" alt="hero">
++<section class="pt-24 pb-10 bg-[var(--light)]">
++  <div class="max-w-6xl mx-auto px-6 grid md:grid-cols-2 gap-6 items-center">
++    <div>
++      <h1 class="text-5xl font-bold text-[var(--primary)]">
++        Handmade for Home — Crafted by Local Artisans
++      </h1>
++      <p class="mt-4 text-lg text-gray-700 max-w-xl">
++        Discover unique, sustainable pieces — pottery, sarees, toys and more. Shop directly from makers.
++      </p>
++      <div class="mt-6 flex gap-3">
++        <a href="#shop" class="btn-primary px-6 py-3 rounded-full">Shop Now</a>
+       </div>
+     </div>
+-  </section>
+-
+-  <!-- CATEGORIES -->
+-  <section id="categories" class="py-8">
+-    <div class="max-w-6xl mx-auto px-6">
+-      <h2 class="text-3xl font-semibold text-[var(--primary)] mb-4">Categories</h2>
+-      <div class="grid grid-cols-2 md:grid-cols-6 gap-4">
+-        <button class="category-chip p-3 rounded-lg bg-white shadow text-sm">Pottery</button>
+-        <button class="category-chip p-3 rounded-lg bg-white shadow text-sm">Sarees</button>
+-        <button class="category-chip p-3 rounded-lg bg-white shadow text-sm">Toys</button>
+-        <button class="category-chip p-3 rounded-lg bg-white shadow text-sm">Handicrafts</button>
+-        <button class="category-chip p-3 rounded-lg bg-white shadow text-sm">Home Decor</button>
+-        <button class="category-chip p-3 rounded-lg bg-white shadow text-sm">Fashion</button>
+-      </div>
++    <div class="hidden md:block">
++      <img src="https://www.thegoodloop.com/wp-content/uploads/2022/01/akhil-pawar-XCd_6nOdzjo-unsplash-1160x754.jpeg" class="rounded-lg shadow" alt="Artisan Crafts">
+     </div>
+-  </section>
++  </div>
++</section>
++
++
++  
+ 
+   <!-- PRODUCTS GRID -->
+   <section id="shop" class="py-6">
+     <div class="max-w-6xl mx-auto px-6">
+       <div class="flex items-center justify-between mb-4">
+-        <h2 class="text-3xl font-semibold text-[var(--primary)]">Featured Products</h2>
++        <h2 class="text-3xl font-semibold text-[var(--primary)]">Shop</h2>
+         <input id="search" placeholder="Search products..." class="border p-2 rounded w-64" />
+       </div>
+ 
+       <div id="products-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+-        <!-- products injected here -->
++        <!-- Products injected here -->
+       </div>
+     </div>
+   </section>
++  <main class="pt-20 max-w-6xl mx-auto px-4">
++    <div id="product-wrap" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
++      <!-- Products will load here -->
++    </div>
++  </main>
++<script>
++  const wrap = document.getElementById('product-wrap');
++
++  // 15 dummy products
++  const products = [
++    { id:1, name: "Handmade Wooden Bowl", description: "A beautiful handcrafted wooden bowl.", price: 499, stock: 12, sellerId: "s1", images:["https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSrgeVlmrFrUa7Auth_L-kth6gIsCX4K9lwMg&s"] },
++    { id:2, name: "Organic Cotton Bag", description: "Eco-friendly organic cotton bag.", price: 299, stock: 20, sellerId: "s2", images:["https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSrhS2bfJ2xnVouMsEMS5SVvKlWvYBaIcGdwg&s"] },
++    { id:3, name: "Handwoven Scarf", description: "Warm handwoven scarf.", price: 799, stock: 5, sellerId: "s3", images:["https://shop.gaatha.com/image/catalog/Vankar-Babubhai-Ladhubhai/20_03_2023/06-(7).jpg"] },
++    { id:4, name: "Ceramic Vase", description: "Elegant ceramic vase for home decor.", price: 1200, stock: 7, sellerId: "s4", images:["https://www.jiomart.com/images/product/original/rvmxslavhh/artysta-madhubani-series-1-pottery-vase-6-9-inch-black-product-images-orvmxslavhh-p595937294-0-202212012052.jpg?im=Resize=(420,420)"] },
++ { id:5, name: "Madhubani Painting", description: "Authentic hand-painted Madhubani art from Bihar.", price: 2500, stock: 7, sellerId: "s3", images:["https://cdn.shopify.com/s/files/1/0582/4007/3878/files/ram-wedding.jpg?v=1635757117"] },
++ { id:11, name: "Pashmina Stole", description: "Soft Pashmina stole handwoven in Kashmir.", price: 3500, stock: 10, sellerId: "s11", images:["https://img500.exportersindia.com/product_images/bc-500/dir_106/3158314/pashmina-shawls-1492152238-2808401.jpeg"] },
++  { id:12, name: "Dhokra Tribal Art Figurine", description: "Unique brass figurine made with Dhokra metal casting technique.", price: 2000, stock: 6, sellerId: "s12", images:["https://storeassets.im-cdn.com/media-manager/realcraftsdotin/ktyz3zgjRNSpW4WR7cAf_three-dhokra-musicians-realcrafts_0x0_webp.jpg"] },
++  { id:13, name: "Kalamkari Wall Hanging", description: "Traditional hand-painted Kalamkari textile from Andhra Pradesh.", price: 2200, stock: 8, sellerId: "s13", images:["https://www.gangesindia.com/cdn/shop/products/45d6526c39f068b704ebaad0619a888e_1024x.jpg?v=1571611560"] },
++];
+ 
+-  <!-- Floating chatbot -->
++  function loadProducts(){
++    wrap.innerHTML = products.map(p => `
++      <div class="bg-white rounded-lg p-3 shadow">
++        <img src="${p.images[0]}" class="w-full h-48 object-cover rounded" />
++        <h2 class="text-lg font-bold text-[var(--primary)] mt-2">${p.name}</h2>
++        <p class="text-gray-600 text-sm mt-1">${p.description}</p>
++        <div class="mt-1">
++          <div class="text-md font-bold text-[var(--primary)]">₹${p.price}</div>
++          <div class="text-xs text-gray-500">Stock: ${p.stock}</div>
++        </div>
++        <div class="mt-2 flex gap-2">
++          <button class="addToCart bg-[var(--primary)] text-white px-3 py-1 rounded text-sm" data-id="${p.id}" data-i18n="products.addToCart">Add to Cart</button>
++        </div>
++      </div>
++    `).join('');
++
++    // Add to cart functionality
++    wrap.querySelectorAll('.addToCart').forEach(btn => {
++      btn.addEventListener('click', e=>{
++        const id = parseInt(e.currentTarget.dataset.id);
++        const p = products.find(x=>x.id===id);
++        const cart = JSON.parse(localStorage.getItem('swadeshi_cart')||'[]');
++        const existing = cart.find(x=>x.id===id);
++        if(existing) existing.qty += 1;
++        else cart.push({ id, name:p.name, price:p.price, qty:1, sellerId:p.sellerId, img: p.images[0] });
++        localStorage.setItem('swadeshi_cart', JSON.stringify(cart));
++        alert(i18n.t('alerts.added_to_cart'));
++      });
++    });
++  }
++
++  loadProducts();
++  if (window.i18n && window.i18n.applyTranslations) window.i18n.applyTranslations();
++</script>
++
++  <!-- CHATBOT -->
+   <div id="chatbotBtn" class="fixed bottom-6 right-6 bg-[var(--primary)] text-white p-4 rounded-full shadow cursor-pointer z-40">
+     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a8 8 0 0 1 8 8v3a4 4 0 0 1-4 4h-1v3l-4-3h-1a4 4 0 0 1-4-4V10a8 8 0 0 1 8-8z"/></svg>
+   </div>
+@@ -88,11 +138,13 @@
+       <h4 class="text-[var(--primary)] font-semibold">Kalakriti AI</h4>
+       <button id="closeChat" class="text-gray-500">✕</button>
+     </div>
+-    <iframe src="kalakritib.html" class="w-full h-64 rounded"></iframe>
++    <iframe src="Kalakritib.html" class="w-full h-64 rounded"></iframe>
+   </div>
+ 
++<script src="translations.js"></script>
++<script src="i18n.js"></script>
++
+ <script type="module">
+-  // Firebase imports
+   import { initializeApp } from "https://www.gstatic.com/firebasejs/9.24.0/firebase-app.js";
+   import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/9.24.0/firebase-auth.js";
+   import { getFirestore, collection, query, orderBy, getDocs, doc, getDoc } from "https://www.gstatic.com/firebasejs/9.24.0/firebase-firestore.js";
+@@ -105,50 +157,52 @@
+     messagingSenderId: "976631330768",
+     appId: "1:976631330768:web:addc77ae3062dee1a9abd5"
+   };
++
+   const app = initializeApp(firebaseConfig);
+   const auth = getAuth(app);
+   const db = getFirestore(app);
+ 
+-  // UI refs
+   const authBtn = document.getElementById('auth-btn');
+   const cartCountEl = document.getElementById('cart-count');
+   const productsGrid = document.getElementById('products-grid');
+   const searchInput = document.getElementById('search');
+ 
+-  // CART helpers (localStorage)
+   const CART_KEY = 'swadeshi_cart';
++
+   function getCart(){ try { return JSON.parse(localStorage.getItem(CART_KEY)) || []; } catch { return []; } }
+   function saveCart(c){ localStorage.setItem(CART_KEY, JSON.stringify(c)); updateCartCount(); }
+-  function updateCartCount(){ const c = getCart(); const qty = c.reduce((s,i)=>s+i.qty,0); cartCountEl.textContent = qty; }
++  function updateCartCount(){ 
++    const qty = getCart().reduce((s,i)=>s+i.qty,0); 
++    if(cartCountEl) cartCountEl.textContent = qty; 
++  }
+ 
+-  // AUTH UI
+   onAuthStateChanged(auth, user => {
+     if(!user){
+       authBtn.textContent = 'Login';
+-      authBtn.onclick = ()=> window.location.href='login.html';
++      authBtn.onclick = () => window.location.href='login.html';
+     } else {
+       authBtn.textContent = 'Logout';
+-      authBtn.onclick = async ()=> { await signOut(auth); location.reload(); };
++      authBtn.onclick = async () => { await signOut(auth); location.reload(); };
+     }
+   });
+ 
+-  // Load products from Firestore
+-  async function loadProducts(){
++  // Load products dynamically
++  async function loadProducts() {
+     productsGrid.innerHTML = `<p class="col-span-3 text-center text-gray-500">Loading...</p>`;
+     try {
+       const q = query(collection(db,'products'), orderBy('createdAt','desc'));
+       const snap = await getDocs(q);
+       productsGrid.innerHTML = '';
+-      snap.forEach(d=>{
++      snap.forEach(d => {
+         const p = d.data();
+         const id = d.id;
+         const img = (p.images && p.images.length) ? p.images[0] : 'https://via.placeholder.com/400?text=No+Image';
+         const card = document.createElement('div');
+-        card.className = 'bg-white rounded-xl shadow p-4';
++        card.className = 'bg-white rounded-xl shadow p-4 product-card';
+         card.innerHTML = `
+           <img src="${img}" alt="${p.name}" class="h-44 w-full object-cover rounded mb-3">
+-          <h3 class="font-semibold text-lg">${escapeHtml(p.name)}</h3>
+-          <p class="text-gray-600 mt-1">${escapeHtml((p.description||'').slice(0,80))}${(p.description||'').length>80?'...':''}</p>
++          <h3 class="font-semibold text-lg">${p.name}</h3>
++          <p class="text-gray-600 mt-1">${(p.description||'').slice(0,80)}...</p>
+           <div class="mt-3 flex items-center justify-between">
+             <div class="font-bold text-[var(--primary)]">₹${p.price||0}</div>
+             <div class="flex gap-2">
+@@ -160,112 +214,79 @@
+         productsGrid.appendChild(card);
+       });
+ 
+-      // attach handlers
+-      document.querySelectorAll('.viewBtn').forEach(b=>b.addEventListener('click', e=>{
+-        const id = e.currentTarget.dataset.id;
+-        window.location.href = `product.html?id=${id}`;
+-      }));
++      document.querySelectorAll('.addBtn').forEach(b => {
++        b.addEventListener('click', async e => {
++          const id = e.currentTarget.dataset.id;
++          const docSnap = await getDoc(doc(db,'products', id));
++          if(!docSnap.exists()) return alert(i18n.t('misc.product_not_found'));
++          const p = docSnap.data();
++          const cart = getCart();
++          const existing = cart.find(i=>i.id===id);
++          if(existing) existing.qty++;
++          else cart.push({ id, name:p.name, price:p.price, sellerId:p.sellerId, qty:1, img:(p.images&&p.images[0])||'' });
++          saveCart(cart);
++          toast(i18n.t('misc.added_to_cart_toast'));
++          updateCartCount();
++        });
++      });
+ 
+-      document.querySelectorAll('.addBtn').forEach(b=>b.addEventListener('click', async (e)=>{
+-        const id = e.currentTarget.dataset.id;
+-        await addToCartById(id);
+-      }));
++      document.querySelectorAll('.viewBtn').forEach(b => {
++        b.addEventListener('click', e => alert(i18n.t('misc.coming_soon')));
+ 
+     } catch(err){
+-      console.error('Load products error', err);
+-      productsGrid.innerHTML = `<p class="col-span-3 text-center text-red-600">Failed to load products.</p>`;
+-    }
+-  }
+-
+-  // add product by id to cart (fetch from Firestore directly)
+-  async function addToCartById(id){
+-    try{
+-      const docSnap = await getDoc(doc(db,'products', id));
+-      if(!docSnap.exists()){ alert('Product not found'); return; }
+-      const p = docSnap.data();
+-      const cart = getCart();
+-      const existing = cart.find(i=>i.id===id);
+-      if(existing){ existing.qty += 1; } else { cart.push({ id, name:p.name, price:p.price, sellerId:p.sellerId, qty:1, img: (p.images&&p.images[0])||'' }); }
+-      saveCart(cart);
+-      toast('Added to cart');
+-    }catch(err){
+       console.error(err);
+-      alert('Could not add to cart');
++      productsGrid.innerHTML = `<p class="col-span-3 text-center text-red-600">Failed to load products.</p>`;
+     }
+   }
+ 
+-  // small toast
+-  function toast(msg){
+-    const t = document.createElement('div');
+-    t.textContent = msg;
+-    t.className = 'fixed bottom-20 right-6 bg-[var(--dark)] text-white px-4 py-2 rounded shadow z-50';
+-    document.body.appendChild(t);
+-    setTimeout(()=> t.remove(),2000);
+-  }
+-
+-  // search filter
+-  searchInput.addEventListener('input', ()=>{
++  // Search filter
++  searchInput.addEventListener('input', () => {
+     const q = searchInput.value.trim().toLowerCase();
+-    Array.from(productsGrid.children).forEach(card=>{
++    Array.from(productsGrid.children).forEach(card => {
+       const title = card.querySelector('h3').textContent.toLowerCase();
+       const desc = card.querySelector('p').textContent.toLowerCase();
+       card.style.display = (title.includes(q) || desc.includes(q)) ? '' : 'none';
+     });
+   });
+ 
+-  // category chips (basic)
+-  document.querySelectorAll('.category-chip').forEach(btn=>{
+-    btn.addEventListener('click', async ()=>{
+-      const cat = btn.textContent.trim();
+-      productsGrid.innerHTML = `<p class="text-center col-span-3">Loading ${cat}...</p>`;
+-      try{
+-        const q = query(collection(db,'products'), orderBy('createdAt','desc'));
+-        const snap = await getDocs(q);
+-        productsGrid.innerHTML = '';
+-        snap.forEach(d=>{
+-          const p = d.data();
+-          if(p.category && p.category.toLowerCase()===cat.toLowerCase()){
+-            const id = d.id;
+-            const img = (p.images && p.images.length) ? p.images[0] : 'https://via.placeholder.com/400?text=No+Image';
+-            const card = document.createElement('div');
+-            card.className = 'bg-white rounded-xl shadow p-4';
+-            card.innerHTML = `
+-              <img src="${img}" alt="${p.name}" class="h-44 w-full object-cover rounded mb-3">
+-              <h3 class="font-semibold text-lg">${escapeHtml(p.name)}</h3>
+-              <p class="text-gray-600 mt-1">${escapeHtml((p.description||'').slice(0,80))}${(p.description||'').length>80?'...':''}</p>
+-              <div class="mt-3 flex items-center justify-between">
+-                <div class="font-bold text-[var(--primary)]">₹${p.price||0}</div>
+-                <div class="flex gap-2">
+-                  <button data-id="${id}" class="viewBtn px-3 py-1 border rounded">View</button>
+-                  <button data-id="${id}" class="addBtn btn-primary px-3 py-1 rounded">Add</button>
+-                </div>
+-              </div>
+-            `;
+-            productsGrid.appendChild(card);
+-          }
+-        });
+-        // reattach handlers
+-        document.querySelectorAll('.viewBtn').forEach(b=>b.addEventListener('click', e=> window.location.href = `product.html?id=${e.currentTarget.dataset.id}`));
+-        document.querySelectorAll('.addBtn').forEach(b=>b.addEventListener('click', e=> addToCartById(e.currentTarget.dataset.id)));
+-      }catch(err){
+-        console.error(err);
+-        productsGrid.innerHTML = `<p class="text-center text-red-600">Load failed</p>`;
+-      }
+-    });
+-  });
+-
+-  // helpers
+-  function escapeHtml(s){ if(!s) return ''; return String(s).replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;'); }
++  function toast(msg){
++    const t = document.createElement('div');
++    t.textContent = msg;
++    t.className = 'fixed bottom-20 right-6 bg-[var(--dark)] text-white px-4 py-2 rounded shadow z-50';
++    document.body.appendChild(t);
++    setTimeout(()=> t.remove(), 2000);
++  }
+ 
+-  // initial
++  // Initial
+   updateCartCount();
+   loadProducts();
+ 
+-  // chatbot toggle
+-  document.getElementById('chatbotBtn').addEventListener('click', ()=> document.getElementById('chatbotWindow').classList.toggle('hidden'));
+-  document.getElementById('closeChat').addEventListener('click', ()=> document.getElementById('chatbotWindow').classList.add('hidden'));
++  // Chatbot toggle
++  document.getElementById('chatbotBtn').addEventListener('click', () => document.getElementById('chatbotWindow').classList.toggle('hidden'));
++  document.getElementById('closeChat').addEventListener('click', () => document.getElementById('chatbotWindow').classList.add('hidden'));
++</script>
++<script>
++function getCartCount() {
++    try {
++        const cart = JSON.parse(localStorage.getItem("swadeshi_cart")) || [];
++        return cart.reduce((sum, item) => sum + item.qty, 0);
++    } catch {
++        return 0;
++    }
++}
+ 
++function updateCartCount() {
++    const el = document.getElementById("cart-count");
++    if (el) el.textContent = getCartCount();
++}
++
++// Update on page load
++document.addEventListener("DOMContentLoaded", updateCartCount);
++
++// Update after each add-to-cart
++document.addEventListener("cart-updated", updateCartCount);
+ </script>
+ 
++
+ </body>
+ </html>
+diff --git a/generate_image_stub.js b/generate_image_stub.js
+new file mode 100644
+index 0000000..b526efa
+--- /dev/null
++++ b/generate_image_stub.js
+@@ -0,0 +1,39 @@
++// generate_image_stub.js — simple Express stub to accept image generation requests
++// Usage: node generate_image_stub.js
++// This stub simply echoes back the uploaded image (simulate AI response).
++// Replace with a proxy to real image-generation API (OpenAI/Replicate/StableDiffusion) on server-side.
++
++import express from 'express';
++import multer from 'multer';
++import fs from 'fs';
++import path from 'path';
++
++const upload = multer({ dest: 'uploads/' });
++const app = express();
++const PORT = process.env.PORT || 3000;
++
++app.post('/api/generate-image', upload.single('image'), async (req, res) => {
++  try {
++    // Debug: log prompt and body fields to verify prompt arrives
++    console.log('generate-image request body:', req.body);
++    console.log('generate-image received prompt:', req.body && req.body.prompt);
++
++    // For now, just return the uploaded file to simulate processing.
++    if (!req.file) return res.status(400).send('No image');
++    const filePath = req.file.path;
++    // Optionally: perform server-side enhancements here, call remote API, etc.
++
++    // Send file back as image/png (or original mimetype)
++    res.setHeader('Content-Type', req.file.mimetype || 'image/jpeg');
++    const stream = fs.createReadStream(filePath);
++    stream.pipe(res);
++
++    // cleanup after response
++    stream.on('close', ()=> fs.unlink(filePath, ()=>{}));
++  } catch (err) {
++    console.error(err);
++    res.status(500).send('Server error');
++  }
++});
++
++app.listen(PORT, ()=> console.log(`Image generation stub listening on http://localhost:${PORT}`));
+diff --git a/i18n.js b/i18n.js
+new file mode 100644
+index 0000000..aa28415
+--- /dev/null
++++ b/i18n.js
+@@ -0,0 +1,73 @@
++// i18n.js — tiny runtime to apply translations in DOM
++(function(){
++  function t(key, lang){
++    if (!window.TRANSLATIONS) return key;
++    lang = lang || (window.i18n && window.i18n.lang) || localStorage.getItem('site-lang') || (navigator.language || 'en').slice(0,2);
++    const obj = window.TRANSLATIONS[lang] || window.TRANSLATIONS['en'];
++    return key.split('.').reduce((o,k)=> o && o[k], obj) || key;
++  }
++
++  function applyTranslations(lang){
++    if (!lang) lang = localStorage.getItem('site-lang') || (navigator.language || 'en').slice(0,2);
++    if (!window.TRANSLATIONS[lang]) lang = 'en';
++    window.i18n = window.i18n || {};
++    window.i18n.lang = lang;
++    window.i18n.t = (k) => t(k, lang);
++
++    // set lang attribute
++    document.documentElement.lang = lang;
++
++    // text content
++    document.querySelectorAll('[data-i18n]').forEach(el => {
++      const key = el.getAttribute('data-i18n');
++      const val = t(key, lang);
++      // If element is INPUT/TEXTAREA and has placeholder attribute, set placeholder
++      if (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA') {
++        el.placeholder = val;
++      } else {
++        el.textContent = val;
++      }
++    });
++
++    // attributes (data-i18n-placeholder, data-i18n-value, data-i18n-title, data-i18n-aria)
++    document.querySelectorAll('[data-i18n-placeholder]').forEach(el=>{
++      const key = el.getAttribute('data-i18n-placeholder');
++      el.placeholder = t(key, lang);
++    });
++    document.querySelectorAll('[data-i18n-title]').forEach(el=>{
++      const key = el.getAttribute('data-i18n-title');
++      el.title = t(key, lang);
++    });
++    document.querySelectorAll('[data-i18n-aria]').forEach(el=>{
++      const key = el.getAttribute('data-i18n-aria');
++      el.setAttribute('aria-label', t(key, lang));
++    });
++
++    // Translate inputs' value if data-i18n-value provided
++    document.querySelectorAll('[data-i18n-value]').forEach(el=>{
++      const key = el.getAttribute('data-i18n-value');
++      el.value = t(key, lang);
++    });
++  }
++
++  function init(){
++    // populate lang selector if present
++    const sel = document.getElementById('lang-select');
++    const saved = localStorage.getItem('site-lang') || (navigator.language||'en').slice(0,2);
++    if (sel) {
++      sel.value = saved;
++      sel.addEventListener('change', (e)=>{
++        localStorage.setItem('site-lang', e.target.value);
++        applyTranslations(e.target.value);
++      });
++    }
++    applyTranslations(saved);
++  }
++
++  // Expose helper
++  window.i18n = window.i18n || {};
++  window.i18n.t = window.i18n.t || ((k)=> t(k));
++  window.i18n.applyTranslations = applyTranslations;
++
++  document.addEventListener('DOMContentLoaded', init);
++})();
+diff --git a/index.html b/index.html
+index ec1679b..cb31240 100644
+--- a/index.html
++++ b/index.html
+@@ -78,20 +78,33 @@
+     </a>
+ 
+     <ul class="hidden md:flex space-x-8 text-gray-700 font-semibold">
+-        <li><a href="#home" class="nav-link">Home</a></li>
+-        <li><a href="#kalakriti" class="nav-link">Kalakriti!</a></li>
+-        <li><a href="#canvas" class="nav-link">Canvas</a></li>
+-        <li><a href="#categories" class="nav-link">Categories</a></li>
+-        <li><a href="#sell" class="nav-link">Sell Products</a></li>
+-        <li><a href="#shop" class="nav-link">Shop</a></li>
+-        <li><a href="#contact" class="nav-link">Contact Us</a></li>
++        <li><a href="#home" class="nav-link" data-i18n="nav.home">Home</a></li>
++        <li><a href="#kalakriti" class="nav-link" data-i18n="nav.kalakriti">Kalakriti!</a></li>
++        <li><a href="#canvas" class="nav-link" data-i18n="nav.canvas">Canvas</a></li>
++        <li><a href="#categories" class="nav-link" data-i18n="nav.categories">Categories</a></li>
++        <li><a href="#sell" class="nav-link" data-i18n="nav.sell">Sell Products</a></li>
++        <li><a href="#shop" class="nav-link" data-i18n="nav.shop">Shop</a></li>
++        <li><a href="#contact" class="nav-link" data-i18n="nav.contact">Contact Us</a></li>
+     </ul>
+ 
+-    <button id="login-btn" class="btn-primary px-4 py-2 rounded-full">Login</button>
++    <button id="login-btn" class="btn-primary px-4 py-2 rounded-full" data-i18n="login.login">Login</button>
++
++    <select id="lang-select" class="ml-4 border rounded p-2 bg-white" aria-label="Language selector">
++        <option value="en">English</option>
++        <option value="hi">हिन्दी</option>
++    </select>
+ 
+     <button id="mobile-menu-btn" class="md:hidden text-[var(--primary-color)]">
+         <i class="fas fa-bars fa-lg"></i>
+     </button>
++    <a href="cart.html" class="relative ml-4">
++    <i class="fas fa-shopping-cart text-2xl text-[var(--primary-color)]"></i>
++    <span id="cart-count"
++        class="absolute -top-2 -right-2 bg-red-600 text-white text-xs px-2 py-0.5 rounded-full">
++        0
++    </span>
++</a>
++
+ </nav>
+ 
+ 
+@@ -112,11 +125,11 @@
+ <!-- HERO SECTION -->
+ <section id="home" class="min-h-screen pt-20 hero-pattern flex items-center text-white">
+     <div class="container mx-auto px-6 py-20">
+-        <h1 class="text-5xl md:text-6xl font-bold mb-6">Empowering Local Artisans</h1>
+-        <p class="text-xl mb-8">
++        <h1 class="text-5xl md:text-6xl font-bold mb-6" data-i18n="hero.title">Empowering Local Artisans</h1>
++        <p class="text-xl mb-8" data-i18n="hero.description">
+             Discover unique handcrafted treasures that tell stories of tradition and passion.
+         </p>
+-        <a href="#shop" class="btn-primary px-8 py-3 rounded-full">Shop Now</a>
++        <a href="#shop" class="btn-primary px-8 py-3 rounded-full" data-i18n="hero.cta">Shop Now</a>
+     </div>
+ </section>
+ 
+@@ -126,8 +139,85 @@
+ <!-- I am NOT rewriting because it causes message limit issues -->
+ <!-- KEEP YOUR FULL CONTENT FROM YOUR FILE HERE -->
+ <!-- Kalakriti! Section --> <section id="kalakriti" class="py-20 bg-[var(--light-color)]"> 
+-    <div class="container mx-auto px-6 max-w-7xl"> <h2 class="text-4xl font-bold text-center mb-12 text-[var(--primary-color)] section-title mx-auto">Kalakriti! <span class="text-[var(--accent-color)]">AI Chatbot</span></h2> <div class="max-w-xl mx-auto bg-white rounded-3xl p-12 shadow-lg flex flex-col items-center space-y-8"> <div id="chatbot" class="w-48 h-48 bg-[var(--primary-color)] rounded-full flex items-center justify-center shadow-lg select-none animate-bounce" aria-label="Animated chatbot icon" role="img" tabindex="0"> <i class="fas fa-robot fa-6x text-white"></i> </div> <p class="text-[var(--dark-color)] text-center text-lg max-w-md"> Meet <strong>Kalakriti!</strong> — your friendly AI assistant ready to help artisans and customers alike. Ask questions about products, selling, shipping, and more. </p> <button id="open-chatbot-btn" class="btn-primary px-8 py-3 rounded-full font-semibold hover:shadow-lg transition" aria-label="Open Kalakriti chatbot"> <a href ="kalakritib.html">Chat now</a> </button> </div> </div> </section> <!-- Canvas Section --> <section id="canvas" class="py-20 bg-white"> <div class="container mx-auto px-6 max-w-7xl"> <h2 class="text-4xl font-bold text-center mb-12 text-[var(--primary-color)] section-title mx-auto">Canvas <span class="text-[var(--accent-color)]">AI-Powered Design Tool</span></h2> <form id="canvas-form" class="max-w-3xl mx-auto flex flex-col space-y-6 border border-[var(--primary-color)] rounded-xl p-8" aria-label="Canvas AI design tool form"> <label class="flex flex-col space-y-2 text-[var(--dark-color)] font-semibold"> Upload Product Image <input type="file" id="product-image" accept="image/*" required class="border border-gray-300 rounded-md p-3" aria-label="Upload product image" /> </label> <label class="flex flex-col space-y-2 text-[var(--dark-color)] font-semibold"> Enter Design Prompt <input type="text" id="design-prompt" placeholder="Describe how you want to enhance your product..." required class="border border-gray-300 rounded-md p-3" aria-label="Design prompt" /> </label> <button type="submit" class="btn-primary px-8 py-3 rounded-full font-semibold hover:shadow-lg transition" aria-label="Generate enhanced visual"> Generate </button> </form> <div id="canvas-result" class="mt-8 max-w-3xl mx-auto hidden flex flex-col items-center space-y-4"> <img id="enhanced-image" alt="Enhanced product visual" class="rounded-lg shadow-lg max-w-full max-h-96" /> <button id="sell-from-canvas" class="btn-primary px-8 py-3 rounded-full font-semibold hover:shadow-lg transition" aria-label="Sell enhanced product"> Sell This Product </button> </div> </div> </section> <!-- Categories Showcase Section --> <section id="categories" class="py-20 bg-white"> <div class="container mx-auto px-6"> <h2 class="text-4xl font-bold text-center mb-16 text-[var(--primary-color)] section-title mx-auto">Our Artisan Categories</h2> <div class="grid md:grid-cols-3 gap-12"> <!-- Pottery Card --> <div class="category-card rounded-2xl overflow-hidden shadow-xl fade-in"> <div class="h-64 overflow-hidden"> <img src="https://www.alphonsostories.com/AlphonSoStoriesImages/downloads/Pottery-blog_0011.jpg" alt="Handcrafted pottery with intricate designs and earthy tones" class="w-full h-full object-cover"> </div> <div class="p-6 bg-[var(--primary-color)] text-white"> <h3 class="text-2xl font-bold mb-2">Pottery</h3> <p class="mb-4">Each piece tells a story of ancient techniques passed down through generations.</p> <a href="#pottery-products" class="inline-flex items-center font-semibold"> Explore Collection <i class="fas fa-arrow-right ml-2"></i> </a> </div> </div> <!-- Saree Card --> <div class="category-card rounded-2xl overflow-hidden shadow-xl fade-in delay-1"> <div class="h-64 overflow-hidden"> <img src="https://www.deepam.com/cdn/shop/articles/D216968_1080x_8d6419f4-9e6a-4f99-8a9b-c76bdc4bbe54_900x.webp?v=1707470495" alt="Handwoven silk saree with golden embroidery on a loom" class="w-full h-full object-cover"> </div> <div class="p-6 bg-[var(--secondary-color)] text-white"> <h3 class="text-2xl font-bold mb-2">Silk Sarees</h3> <p class="mb-4">Elegant handwoven sarees that embody centuries of textile heritage.</p> <a href="#saree-products" class="inline-flex items-center font-semibold"> Explore Collection <i class="fas fa-arrow-right ml-2"></i> </a> </div> </div> <!-- Toys Card --> <div class="category-card rounded-2xl overflow-hidden shadow-xl fade-in delay-2"> <div class="h-64 overflow-hidden"> <img src="https://storeassets.im-cdn.com/standalone/767432/eco_friendly_channapatna_wooden_toys_and_dolls_11.webp" alt="Colorful handmade wooden toys arranged artistically" class="w-full h-full object-cover"> </div> <div class="p-6 bg-[var(--accent-color)] text-[var(--dark-color)]"> <h3 class="text-2xl font-bold mb-2">Handmade Toys</h3> <p class="mb-4">Eco-friendly toys crafted with love and care for the next generation.</p> <a href="#toy-products" class="inline-flex items-center font-semibold"> Explore Collection <i class="fas fa-arrow-right ml-2"></i> </a> </div> </div> </div> </div> </section> <!-- Products Section --> <section id="shop" class="py-20 bg-[var(--light-color)]"> <div class="container mx-auto px-6"> <h2 class="text-4xl font-bold text-center mb-16 text-[var(--primary-color)] section-title mx-auto">Featured Products</h2> <div class="grid md:grid-cols-3 gap-8"> <!-- Product 1 --> <div class="product-card rounded-2xl overflow-hidden p-6 fade-in"> <div class="h-56 overflow-hidden rounded-xl mb-4"> <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTSMTPh1vUQafFbX4RXOnNxf339A8xwgq5zZQ&s" alt="Hand-painted blue pottery vase with intricate floral patterns" class="w-full h-full object-cover"> </div> <h3 class="text-xl font-bold mb-2">Blue Pottery Vase</h3> <p class="text-gray-600 mb-4">Hand-painted with traditional motifs, perfect for home decor.</p> <div class="flex justify-between items-center"> <span class="text-[var(--primary-color)] font-bold text-xl">₹1,499</span> <button class="btn-primary px-4 py-2 rounded-full">Add to Cart</button> </div> </div> <!-- Product 2 --> <div class="product-card rounded-2xl overflow-hidden p-6 fade-in delay-1"> <div class="h-56 overflow-hidden rounded-xl mb-4"> <img src="https://www.singhanias.in/cdn/shop/articles/a7c79ac0397619b0c5304d37acef063e.jpg?v=1668085176" alt="Handwoven silk saree with golden border and intricate embroidery" class="w-full h-full object-cover"> </div> <h3 class="text-xl font-bold mb-2">Banarasi Silk Saree</h3> <p class="text-gray-600 mb-4">Elegant handwoven silk with gold zari work.</p> <div class="flex justify-between items-center"> <span class="text-[var(--primary-color)] font-bold text-xl">₹5,999</span> <button class="btn-primary px-4 py-2 rounded-full">Add to Cart</button> </div> </div> <!-- Product 3 --> <div class="product-card rounded-2xl overflow-hidden p-6 fade-in delay-2"> <div class="h-56 overflow-hidden rounded-xl mb-"> <img src="https://i.ebayimg.com/images/g/5gYAAOSwgEhkHDsp/s-l400.jpg" alt="Handcrafted wooden elephant toy with colorful patterns" class="w-full h-full object-cover"> </div> <h3 class="text-xl font-bold mb-2">Wooden Elephant Toy</h3> <p class="text-gray-600 mb-4">Eco-friendly wooden toy with non-toxic colors.</p> <div class="flex justify-between items-center"> <span class="text-[var(--primary-color)] font-bold text-xl">₹799</span> <button class="btn-primary px-4 py-2 rounded-full">Add to Cart</button> </div> </div> </div> </div> </section> <!-- Sell Products Section --> <section id="sell" class="py-20 bg-white"> <div class="container mx-auto px-6 max-w-4xl"> <h2 class="text-4xl font-bold text-center mb-16 text-[var(--primary-color)] section-title mx-auto">Sell Your Products</h2> <form class="bg-[var(--light-color)] p-8 rounded-2xl shadow-lg"> <div class="grid md:grid-cols-2 gap-6"> <div> <label class="block text-[var(--dark-color)] font-semibold mb-2">Product Name</label> <input type="text" class="w-full border border-gray-300 rounded-md p-3" placeholder="Enter product name"> </div> <div> <label class="block text-[var(--dark-color)] font-semibold mb-2">Category</label> <select class="w-full border border-gray-300 rounded-md p-3"> <option>Pottery</option> <option>Saree</option> <option>Toys</option> <option>Other</option> </select> </div> <div class="md:col-span-2"> <label class="block text-[var(--dark-color)] font-semibold mb-2">Description</label> <textarea class="w-full border border-gray-300 rounded-md p-3" rows="3" placeholder="Describe your product"></textarea> </div> <div> <label class="block text-[var(--dark-color)] font-semibold mb-2">Price (₹)</label> <input type="number" class="w-full border border-gray-300 rounded-md p-3" placeholder="Enter price"> </div> <div> <label class="block text-[var(--dark-color)] font-semibold mb-2">Product Images</label> <input type="file" multiple class="w-full border border-gray-300 rounded-md p-3"> </div> </div> <button type="submit" class="btn-primary px-8 py-3 rounded-full font-semibold mt-6">List Product</button> </form> </div> </section> <!-- Contact Us Modal --> <div id="contact-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50" role="dialog" aria-modal="true" aria-labelledby="contact-modal-title"> <div class="bg-white rounded-xl max-w-md w-full p-8 relative shadow-lg"> <h3 id="contact-modal-title" class="text-2xl font-bold mb-6 text-[var(--primary-color)]">Contact Us</h3> <button id="close-contact" class="absolute top-4 right-4 text-gray-600 hover:text-[var(--primary-color)] focus:outline-none" aria-label="Close contact form"> <i class="fas fa-times fa-lg"></i> </button> <form id="contact-form" class="flex flex-col gap-4" aria-label="Contact form"> <input type="text" id="contact-name" placeholder="Your Name" required class="border border-[var(--primary-color)] rounded-md p-3" aria-label="Your name" /> <input type="email" id="contact-email" placeholder="Your Email" required class="border border-[var(--primary-color)] rounded-md p-3" aria-label="Your email" /> <textarea id="contact-message" placeholder="Your Message" rows="4" required class="border border-[var(--primary-color)] rounded-md p-3" aria-label="Your message"></textarea> <button type="submit" class="btn-primary px-8 py-3 rounded-full font-semibold hover:shadow-lg transition" aria-label="Send message"> Send Message </button> </form> </div> </div>
++    <div class="container mx-auto px-6 max-w-7xl"> <h2 class="text-4xl font-bold text-center mb-12 text-[var(--primary-color)] section-title mx-auto">Kalakriti! <span class="text-[var(--accent-color)]">AI Chatbot</span></h2> <div class="max-w-xl mx-auto bg-white rounded-3xl p-12 shadow-lg flex \
++        flex-col items-center space-y-8"> <div id="chatbot" class="w-48 h-48 bg-[var(--primary-color)] rounded-full flex items-center justify-center shadow-lg select-none animate-bounce" aria-label="Animated chatbot icon" role="img" tabindex="0"> <i class="fas fa-robot fa-6x text-white"></i> </div> <p class="text-[var(--dark-color)] text-center text-lg max-w-md" data-i18n="kalakriti.description"> Meet <strong>Kalakriti!</strong> — your friendly AI assistant ready to help artisans and customers alike. Ask questions about products, selling, shipping, and more. </p> <button id="open-chatbot-btn" class="btn-primary px-8 py-3 rounded-full font-semibold hover:shadow-lg transition" aria-label="Open Kalakriti chatbot"> <a href ="kalakritib.html" data-i18n="kalakriti.cta">Chat now</a> </button> </div> </div> </section> <!-- Canvas Section --> <section id="canvas" class="py-20 bg-white"> <div class="container mx-auto px-6 max-w-7xl"> <h2 class="text-4xl font-bold text-center mb-12 text-[var(--primary-color)] section-title mx-auto">Canvas <span class="text-[var(--accent-color)]">AI-Powered Design Tool</span></h2> <form id="canvas-form" class="max-w-3xl mx-auto flex flex-col space-y-6 border border-[var(--primary-color)] rounded-xl p-8" aria-label="Canvas AI design tool form"> <label class="flex flex-col space-y-2 text-[var(--dark-color)] font-semibold" data-i18n="canvas.upload">
++  Upload Product Image
++  <div id="product-dropzone" class="mt-2 border-2 border-dashed border-gray-300 rounded-md p-6 text-center cursor-pointer" aria-label="Drag and drop image here or click choose file">
++    <p id="dropzone-text" class="text-sm text-gray-600">Drag & drop an image here, or</p>
++    <div class="mt-3 flex justify-center gap-3">
++      <button type="button" id="choose-file-btn" class="btn-outline px-4 py-2 rounded">Choose file</button>
++      <button type="button" id="paste-image-btn" class="btn-outline px-4 py-2 rounded">Paste image / URL</button>
++    </div>
++
++    <input type="file" id="product-image" accept="image/*" required class="hidden" aria-label="Upload product image" />
+ 
++    <div id="image-preview" class="mt-4 hidden">
++      <img id="preview-img" src="#" alt="Selected image preview" class="mx-auto rounded-md shadow-sm max-h-48" />
++      <div class="mt-2 text-sm text-gray-600" id="preview-name"></div>
++      <button type="button" id="remove-preview" class="btn-outline mt-2 px-4 py-1 rounded">Remove</button>
++    </div>
++  </div>
++</label> <label class="flex flex-col space-y-2 text-[var(--dark-color)] font-semibold" data-i18n="canvas.promptLabel"> Enter Design Prompt <input type="text" id="design-prompt" data-i18n-placeholder="canvas.prompt" class="border border-gray-300 rounded-md p-3" aria-label="Design prompt" /> </label> <div class="flex items-center gap-6"> <label class="flex items-center gap-2"><input type="radio" name="canvas-mode" value="local" checked> <span data-i18n="canvas.mode_local">Local Enhance</span></label> <label class="flex items-center gap-2"><input type="radio" name="canvas-mode" value="ai"> <span data-i18n="canvas.mode_ai">AI Generate</span></label> </div> <label class="flex items-center gap-3" title="Strength"> <span data-i18n="canvas.strength">Strength</span> <input type="range" id="canvas-strength" min="0" max="100" value="50" class="w-full" /> </label> <label class="flex items-center gap-2"> <span data-i18n="canvas.style_label">Style</span> <select id="canvas-style" class="border border-gray-300 rounded-md p-2"> <option value="natural" data-i18n="canvas.style_natural">Natural</option> <option value="artistic" data-i18n="canvas.style_artistic">Artistic</option> <option value="vintage" data-i18n="canvas.style_vintage">Vintage</option> </select> </label> <div class="flex gap-3"> <button type="button" id="generate-canvas" class="btn-primary px-8 py-3 rounded-full font-semibold hover:shadow-lg transition" aria-label="Generate enhanced visual"> <span data-i18n="canvas.generate">Generate</span> </button> <button type="button" id="download-canvas" class="btn-outline px-6 py-2 rounded hidden" data-i18n="canvas.download">Download</button> </div> <div id="canvas-status" class="text-sm text-gray-600 mt-2" data-i18n="canvas.idle">Idle</div> </form>
++
++<!-- Paste Image / URL Modal -->
++<div id="paste-image-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50" role="dialog" aria-modal="true" aria-labelledby="paste-modal-title">
++  <div class="bg-white rounded-xl max-w-md w-full p-6 relative shadow-lg">
++    <h3 id="paste-modal-title" class="text-xl font-bold mb-4">Paste Image URL or Upload</h3>
++    <input id="paste-image-url" type="url" placeholder="Paste image URL here" class="w-full border border-gray-300 rounded-md p-3 mb-3" />
++    <div class="text-sm text-gray-600 mb-3">Or paste an image directly (Ctrl+V)</div>
++    <div class="flex gap-3 justify-end">
++      <button id="cancel-paste" type="button" class="btn-outline px-4 py-2 rounded">Cancel</button>
++      <button id="use-url-btn" type="button" class="btn-primary px-4 py-2 rounded">Use URL</button>
++    </div>
++    <button id="close-paste-modal" class="absolute top-3 right-3 text-gray-500">&times;</button>
++  </div>
++</div>
++
++<div id="canvas-result" class="mt-8 max-w-3xl mx-auto hidden flex flex-col items-center space-y-4"> <img id="enhanced-image" alt="Enhanced product visual" class="rounded-lg shadow-lg max-w-full max-h-96" /> <canvas id="processing-canvas" class="hidden"></canvas> <div class="flex gap-2 mt-2"> <button id="sell-from-canvas" class="btn-primary px-8 py-3 rounded-full font-semibold hover:shadow-lg transition" aria-label="Sell enhanced product" data-i18n="canvas.sell">Sell This Product</button> <a id="download-link" href="#" class="hidden" download></a> </div> </div> </div> </section>  <!-- Categories Showcase Section --> <section id="categories" class="py-20 bg-white"> <div class="container mx-auto px-6"> <h2 class="text-4xl font-bold text-center mb-16 text-[var(--primary-color)] section-title mx-auto">Our Artisan Categories</h2> <div class="grid md:grid-cols-3 gap-12"> <!-- Pottery Card --> <div class="category-card rounded-2xl overflow-hidden shadow-xl fade-in"> <div class="h-64 overflow-hidden"> <img src="https://www.alphonsostories.com/AlphonSoStoriesImages/downloads/Pottery-blog_0011.jpg" alt="Handcrafted pottery with intricate designs and earthy tones" class="w-full h-full object-cover"> </div> <div class="p-6 bg-[var(--primary-color)] text-white"> <h3 class="text-2xl font-bold mb-2">Pottery</h3> <p class="mb-4">Each piece tells a story of ancient techniques passed down through generations.</p> <a href="#pottery-products" class="inline-flex items-center font-semibold"> Explore Collection <i class="fas fa-arrow-right ml-2"></i> </a> </div> </div> <!-- Saree Card --> <div class="category-card rounded-2xl overflow-hidden shadow-xl fade-in delay-1"> <div class="h-64 overflow-hidden"> <img src="https://www.deepam.com/cdn/shop/articles/D216968_1080x_8d6419f4-9e6a-4f99-8a9b-c76bdc4bbe54_900x.webp?v=1707470495" alt="Handwoven silk saree with golden embroidery on a loom" class="w-full h-full object-cover"> </div> <div class="p-6 bg-[var(--secondary-color)] text-white"> <h3 class="text-2xl font-bold mb-2">Silk Sarees</h3> <p class="mb-4">Elegant handwoven sarees that embody centuries of textile heritage.</p> <a href="#saree-products" class="inline-flex items-center font-semibold"> Explore Collection <i class="fas fa-arrow-right ml-2"></i> </a> </div> </div> <!-- Toys Card --> <div class="category-card rounded-2xl overflow-hidden shadow-xl fade-in delay-2"> <div class="h-64 overflow-hidden"> <img src="https://storeassets.im-cdn.com/standalone/767432/eco_friendly_channapatna_wooden_toys_and_dolls_11.webp" alt="Colorful handmade wooden toys arranged artistically" class="w-full h-full object-cover"> </div> <div class="p-6 bg-[var(--accent-color)] text-[var(--dark-color)]"> <h3 class="text-2xl font-bold mb-2">Handmade Toys</h3> <p class="mb-4">Eco-friendly toys crafted with love and care for the next generation.</p> <a href="#toy-products" class="inline-flex items-center font-semibold"> Explore Collection <i class="fas fa-arrow-right ml-2"></i> </a> </div> </div> </div> </div> </section> <!-- Products Section --> <section id="shop" class="py-20 bg-[var(--light-color)]"> <div class="container mx-auto px-6"> 
++        <h2 class="text-4xl font-bold text-center mb-16 text-[var(--primary-color)] section-title mx-auto">Featured Products</h2> 
++        <div class="grid md:grid-cols-3 gap-8"> <!-- Product 1 --> <div class="product-card rounded-2xl overflow-hidden p-6 fade-in"> <div class="h-56 overflow-hidden rounded-xl mb-4"> <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTSMTPh1vUQafFbX4RXOnNxf339A8xwgq5zZQ&s" alt="Hand-painted blue pottery vase with intricate floral patterns" class="w-full h-full object-cover"> </div> <h3 class="text-xl font-bold mb-2">Blue Pottery Vase</h3> <p class="text-gray-600 mb-4">Hand-painted with traditional motifs, perfect for home decor.</p> <div class="flex justify-between items-center"> <span class="text-[var(--primary-color)] font-bold text-xl">₹1,499</span> <button class="btn-primary px-4 py-2 rounded-full" data-i18n="products.addToCart">Add to Cart</button> </div> 
++    </div> <!-- Product 2 -->  <div class="product-card rounded-2xl overflow-hidden p-6 fade-in"> <div class="h-56 overflow-hidden rounded-xl mb-4"> <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRdPb8bEz2vQchlXVQ6ImpJkP9Hn_WFNr2WCw&s" alt="Pure Mysore Silk Saree" class="w-full h-full object-cover"> </div> <h3 class="text-xl font-bold mb-2">Mysore Silk Saree</h3> <p class="text-gray-600 mb-4">Elegant handwoven silk saree</p> <div class="flex justify-between items-center"> <span class="text-[var(--primary-color)] font-bold text-xl">₹20,499</span> <button class="btn-primary px-4 py-2 rounded-full" data-i18n="products.addToCart">Add to Cart</button> </div> 
++    </div><!--product2i--><div class="product-card rounded-2xl overflow-hidden p-6 fade-in"> <div class="h-56 overflow-hidden rounded-xl mb-4"> <img src="https://images.jdmagicbox.com/v2/comp/def_content/ncat_id/wooden-toy-qjh8714-250.jpg" alt="wood toys" class="w-full h-full object-cover"> </div> <h3 class="text-xl font-bold mb-2">Channapatna Toys</h3> <p class="text-gray-600 mb-4">Handcrafted and eco-friendly wooden toys</p> <div class="flex justify-between items-center"> <span class="text-[var(--primary-color)] font-bold text-xl">₹199</span> <button class="btn-primary px-4 py-2 rounded-full" data-i18n="products.addToCart">Add to Cart</button> </div> 
++    </div><!--product 3--> <div class="product-card rounded-2xl overflow-hidden p-6 fade-in delay-1"> <div class="h-56 overflow-hidden rounded-xl mb-4"> <img src="https://hmrhandlooms.com/cdn/shop/files/D94A32BC-36D2-4F97-8759-1D58C541C826.jpg?v=1761219716" alt="Handwoven silk saree with golden border and intricate embroidery" class="w-full h-full object-cover"> </div> <h3 class="text-xl font-bold mb-2">Banarasi Silk Saree</h3> <p class="text-gray-600 mb-4">Elegant handwoven silk with gold zari work.</p> <div class="flex justify-between items-center"> <span class="text-[var(--primary-color)] font-bold text-xl">₹5,999</span> <button class="btn-primary px-4 py-2 rounded-full" data-i18n="products.addToCart">Add to Cart</button> </div> </div> <!-- Product 3 --> <div class="product-card rounded-2xl overflow-hidden p-6 fade-in delay-2"> <div class="h-56 overflow-hidden rounded-xl mb-"> <img src="https://i.ebayimg.com/images/g/5gYAAOSwgEhkHDsp/s-l400.jpg" alt="Handcrafted wooden elephant toy with colorful patterns" class="w-full h-full object-cover"> </div> <h3 class="text-xl font-bold mb-2">Wooden Elephant Toy</h3> <p class="text-gray-600 mb-4">Eco-friendly wooden toy with non-toxic colors.</p> <div class="flex justify-between items-center"> <span class="text-[var(--primary-color)] font-bold text-xl">₹799</span> <button class="btn-primary px-4 py-2 rounded-full" data-i18n="products.addToCart">Add to Cart</button> </div> </div> </div> </div> </section> <!-- Sell Products Section --> <section id="sell" class="py-20 bg-white"> <div class="container mx-auto px-6 max-w-4xl"> <h2 class="text-4xl font-bold text-center mb-16 text-[var(--primary-color)] section-title mx-auto" data-i18n="sell.title">Sell Your Products</h2> <form id="product-form" class="bg-[var(--light-color)] p-8 rounded-2xl shadow-lg"> <div class="grid md:grid-cols-2 gap-6"> <div> <label class="block text-[var(--dark-color)] font-semibold mb-2" data-i18n="sell.name">Product Name</label> <input id="prod-name" type="text" class="w-full border border-gray-300 rounded-md p-3" placeholder="Enter product name" data-i18n-placeholder="sell.name" required> </div> <div> <label class="block text-[var(--dark-color)] font-semibold mb-2" data-i18n="sell.category">Category</label> <select id="prod-category" class="w-full border border-gray-300 rounded-md p-3" required> <option value="">Select Category</option> <option>Pottery</option> <option>Saree</option> <option>Toys</option> <option>Other</option> </select> </div> <div class="md:col-span-2"> <label class="block text-[var(--dark-color)] font-semibold mb-2">Description</label> <textarea id="prod-desc" class="w-full border border-gray-300 rounded-md p-3" rows="3" placeholder="Describe your product" required></textarea> </div> <div> <label class="block text-[var(--dark-color)] font-semibold mb-2">Price (₹)</label> <input id="prod-price" type="number" class="w-full border border-gray-300 rounded-md p-3" placeholder="Enter price" required> </div> <div> <label class="block text-[var(--dark-color)] font-semibold mb-2">Product Images</label> <input id="prod-images" type="file" accept="image/*" multiple class="w-full border border-gray-300 rounded-md p-3" required> </div> </div> <div class="mt-4"> <span id="list-status" class="text-sm text-gray-600"></span> </div> <button type="submit" class="btn-primary px-8 py-3 rounded-full font-semibold mt-6" data-i18n="sell.list">List Product</button> </form> </div> </section> <!-- Contact Us Modal --> <div id="contact-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50" role="dialog" aria-modal="true" aria-labelledby="contact-modal-title"> <div class="bg-white rounded-xl max-w-md w-full p-8 relative shadow-lg"> <h3 id="contact-modal-title" class="text-2xl font-bold mb-6 text-[var(--primary-color)]" data-i18n="contact.title">Contact Us</h3> <button id="close-contact" class="absolute top-4 right-4 text-gray-600 hover:text-[var(--primary-color)] focus:outline-none" aria-label="Close contact form"> <i class="fas fa-times fa-lg"></i> </button> <form id="contact-form" class="flex flex-col gap-4" aria-label="Contact form"> <input type="text" id="contact-name" placeholder="Your Name" data-i18n-placeholder="contact.name" required class="border border-[var(--primary-color)] rounded-md p-3" aria-label="Your name" /> <input type="email" id="contact-email" placeholder="Your Email" data-i18n-placeholder="contact.email" required class="border border-[var(--primary-color)] rounded-md p-3" aria-label="Your email" /> <textarea id="contact-message" placeholder="Your Message" data-i18n-placeholder="contact.message" rows="4" required class="border border-[var(--primary-color)] rounded-md p-3" aria-label="Your message"></textarea> <button type="submit" class="btn-primary px-8 py-3 rounded-full font-semibold hover:shadow-lg transition" aria-label="Send message" data-i18n="contact.send"> Send Message </button> </form> </div> </div>
++
++
++    <!-- Footer -->
++    <footer class="bg-[var(--dark-color)] text-white py-12">
++        <div class="container mx-auto px-6">
++            <div class="grid md:grid-cols-4 gap-8">
++                <div>
++                    <h3 class="text-2xl font-bold mb-4 text-[var(--accent-color)]" data-i18n="footer.name">Swadeshi</h3>
++                    <p data-i18n="footer.tagline">Empowering local artisans to showcase and sell their unique handmade products.</p>
++                </div>
++                <div>
++                    <h4 class="text-lg font-semibold mb-4">Quick Links</h4>
++                    <ul class="space-y-2">
++                        <li><a href="#home" class="hover:text-[var(--accent-color)]">Home</a></li>
++                        <li><a href="#shop" class="hover:text-[var(--accent-color)]">Shop</a></li>
++                        <li><a href="#sell" class="hover:text-[var(--accent-color)]">Sell Products</a></li>
++                        <li><a href="#contact" class="hover:text-[var(--accent-color)]">Contact Us</a></li>
++                    </ul>
++                </div>
++                <div>
++                    <h4 class="text-lg font-semibold mb-4">Categories</h4>
++                    <ul class="space-y-2">
++                        <li><a href="#pottery" class="hover:text-[var(--accent-color)]">Pottery</a></li>
++                        <li><a href="#saree" class="hover:text-[var(--accent-color)]">Silk Sarees</a></li>
++                        <li><a href="#toys" class="hover:text-[var(--accent-color)]">Handmade Toys</a></li>
++                    </ul>
++                </div>
++                <div>
++                    <h4 class="text-lg font-semibold mb-4">Contact Info</h4>
++                    <p class="mb-2">Email: swadeshi@gmail.com</p>
++                    <p class="mb-2">Instagram: @Swadeshi</p>
++                    <p>Phone: +91 2345678907</p>
++                </div>
++            </div>
++            <div class="border-t border-gray-600 mt-8 pt-8 text-center">
++                <p>&copy; 2024 Swadeshi. All rights reserved.</p>
++            </div>
++        </div>
++    </footer>
+ <!-- FIREBASE LOGIN / REDIRECT SYSTEM -->
+ <script type="module">
+ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+@@ -168,7 +258,94 @@ onAuthStateChanged(auth, async (user) => {
+ </script>
+ 
+ <script src="https://unpkg.com/lenis@1.3.11/dist/lenis.min.js"></script>
++<script src="translations.js"></script>
++<script src="i18n.js"></script>
++<script src="canvas.js"></script>
+ <script src="script.js"></script>
++<script type="module" src="main.js"></script>
++<script>
++/* --------------------------
++    CART UTIL FUNCTIONS
++---------------------------*/
++function getCart() {
++    try {
++        return JSON.parse(localStorage.getItem("swadeshi_cart")) || [];
++    } catch {
++        return [];
++    }
++}
++
++function saveCart(cart) {
++    localStorage.setItem("swadeshi_cart", JSON.stringify(cart));
++}
++
++/* --------------------------
++   ADD TO CART LOGIC
++---------------------------*/
++document.addEventListener("DOMContentLoaded", () => {
++
++    const products = document.querySelectorAll("#shop .product-card");
++
++    products.forEach((card, index) => {
++
++        const btn = card.querySelector("button");
++        const name = card.querySelector("h3").innerText.trim();
++        const priceText = card.querySelector("span").innerText.replace("₹", "").trim();
++        const img = card.querySelector("img").src;
++
++        const price = parseInt(priceText);
++        const id = "prod_" + (index + 1); // unique product id
++        const sellerId = "seller_default"; // update later when sellers upload
++
++        btn.addEventListener("click", () => {
++            let cart = getCart();
++
++            // check if product exists
++            let existing = cart.find(item => item.id === id);
++
++            if (existing) {
++                existing.qty += 1;
++            } else {
++                cart.push({
++                    id,
++                    name,
++                    price,
++                    img,
++                    qty: 1,
++                    sellerId
++                });
++            }
++saveCart(cart);
++document.dispatchEvent(new Event("cart-updated"));
++alert(i18n.t("alerts.added_to_cart"));
++
++        });
++    });
++
++});
++</script>
++<script>
++function getCartCount() {
++    try {
++        const cart = JSON.parse(localStorage.getItem("swadeshi_cart")) || [];
++        return cart.reduce((sum, item) => sum + item.qty, 0);
++    } catch {
++        return 0;
++    }
++}
++
++function updateCartCount() {
++    const el = document.getElementById("cart-count");
++    if (el) el.textContent = getCartCount();
++}
++
++// Update on page load
++document.addEventListener("DOMContentLoaded", updateCartCount);
++
++// Update after each add-to-cart
++document.addEventListener("cart-updated", updateCartCount);
++</script>
++
+ 
+ </body>
+ </html>
+diff --git a/main.js b/main.js
+index 7eef272..957a2cc 100644
+--- a/main.js
++++ b/main.js
+@@ -1,6 +1,6 @@
+ // main.js extracted from index.html script
+ 
+-import { initializeApp } from "https://www.gstatic.com/firebasejs/9.24.0/firebase-app.js";
++import { initializeApp, getApps, getApp } from "https://www.gstatic.com/firebasejs/9.24.0/firebase-app.js";
+ import { getAuth, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.24.0/firebase-auth.js";
+ import { getFirestore, doc, setDoc, collection, addDoc, query, getDocs, orderBy, getDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/9.24.0/firebase-firestore.js";
+ import { getStorage, ref as storageRef, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/9.24.0/firebase-storage.js";
+@@ -10,18 +10,18 @@ console.log("MAIN JS LOADED ✔");
+ // FIREBASE CONFIG
+ const firebaseConfig = {
+   apiKey: "AIzaSyAs8Ee4DFiPXq3o8UgCgrLFKmLECmxiuyc",
+-  authDomain: "swadeshi-b73c1.firebaseapp.com",
++  authDomain: "swadeshi-b73c1.web.app",
+   projectId: "swadeshi-b73c1",
+   storageBucket: "swadeshi-b73c1.appspot.com",
+   messagingSenderId: "976631330768",
+   appId: "1:976631330768:web:addc77ae3062dee1a9abd5"
+ };
+ 
+-// INIT
+-const app = initializeApp(firebaseConfig);
+-const auth = getAuth();
+-const db = getFirestore();
+-const storage = getStorage();
++// INIT (avoid duplicate app if another script already inits)
++const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
++const auth = getAuth(app);
++const db = getFirestore(app);
++const storage = getStorage(app);
+ 
+ // ELEMENTS
+ const loginBtn = document.getElementById("login-btn");
+@@ -46,17 +46,9 @@ try {
+ try {
+   document.getElementById("canvas-form").addEventListener("submit", (e) => {
+     e.preventDefault();
+-    const fileInput = document.getElementById("product-image");
+-    const prompt = document.getElementById("design-prompt").value;
+-
+-    if (!fileInput.files.length) return alert("Upload an image!");
+-
+-    const reader = new FileReader();
+-    reader.onload = (evt) => {
+-      document.getElementById("enhanced-image").src = evt.target.result;
+-      document.getElementById("canvas-result").classList.remove("hidden");
+-    };
+-    reader.readAsDataURL(fileInput.files[0]);
++    // If user pressed Enter inside the prompt, trigger the same action as clicking "Generate"
++    const generateBtn = document.getElementById("generate-canvas");
++    if (generateBtn) generateBtn.click();
+   });
+ 
+   document.getElementById("sell-from-canvas").onclick = () => {
+@@ -67,75 +59,121 @@ try {
+ 
+ // AUTH STATE
+ onAuthStateChanged(auth, async (user) => {
+-  console.log("Auth state checked");
+-
+-  if (user) {
+-    const userDoc = await getDoc(doc(db, "users", user.uid));
+-    if (userDoc.exists()){
+-      const role = userDoc.data().role;
+-      if(role === "seller"){
+-        window.location.href = "seller-dashboard.html";
+-        return;
++  const isIndexPage = !window.location.pathname || window.location.pathname.endsWith("index.html") || window.location.pathname.endsWith("/");
++  if (loginBtn) {
++    if (user) {
++      loginBtn.textContent = i18n.t("login.logout");
++      loginBtn.onclick = async () => { await signOut(auth); location.reload(); };
++      const userDoc = await getDoc(doc(db, "users", user.uid));
++      if (userDoc.exists()) {
++        const role = userDoc.data().role;
++        if (role === "seller" && !isIndexPage) {
++          window.location.href = "seller-dashboard.html";
++          return;
++        }
++        if (role === "customer" && !isIndexPage) {
++          window.location.href = "customer-home.html";
++          return;
++        }
+       }
++    } else {
++      loginBtn.textContent = i18n.t("login.login");
++      loginBtn.onclick = () => { window.location.href = "login.html"; };
+     }
+-
+-    loginBtn.textContent = "Logout";
+-    loginBtn.onclick = async()=>{
+-      await signOut(auth);
+-      location.reload();
+-    };
+-
+-  } else {
+-    loginBtn.textContent = "Login";
+-    loginBtn.onclick = ()=> window.location.href = "login.html";
+   }
+ });
+ 
+-// PRODUCT UPLOAD
++// PRODUCT UPLOAD (index.html Sell Your Products form)
+ try {
+-  document.getElementById("product-form").addEventListener("submit", async (e) => {
+-    e.preventDefault();
+-
+-    const user = auth.currentUser;
+-    if(!user) return window.location.href = "login.html";
++  const productForm = document.getElementById("product-form");
++  if (productForm) {
++    productForm.addEventListener("submit", async (e) => {
++      e.preventDefault();
++
++      const name = document.getElementById('prod-name')?.value?.trim();
++      const category = document.getElementById('prod-category')?.value?.trim();
++      const desc = document.getElementById('prod-desc')?.value?.trim();
++      const price = Number(document.getElementById('prod-price')?.value);
++      const files = document.getElementById('prod-images')?.files;
++
++      if (!name || !category || !desc || !price) {
++        alert(i18n.t("alerts.fill_fields"));
++        return;
++      }
++      if (!files || files.length === 0) {
++        alert(i18n.t("alerts.upload_image"));
++        return;
++      }
+ 
+-    const userDoc = await getDoc(doc(db, "users", user.uid));
+-    if(!userDoc.exists() || userDoc.data().role !== "seller"){
+-      alert("Only sellers can list products.");
+-      return;
+-    }
++      const listStatus = document.getElementById("list-status");
++      const setStatus = (text, color) => {
++        if (listStatus) { listStatus.textContent = text; listStatus.style.color = color || ''; }
++      };
++
++      const user = auth.currentUser;
++
++      if (user) {
++        const userDoc = await getDoc(doc(db, "users", user.uid));
++        if (!userDoc.exists() || userDoc.data().role !== "seller") {
++          alert(i18n.t("alerts.only_sellers"));
++          saveLocalProductAndRedirect(name, category, desc, price, files);
++          return;
++        }
++        setStatus(i18n.t("status.uploading") || "Uploading images...", "blue");
++        const urls = [];
++        for (let i = 0; i < files.length; i++) {
++          const file = files[i];
++          const fileRef = storageRef(storage, `products/${user.uid}/${Date.now()}_${i}_${file.name}`);
++          await uploadBytes(fileRef, file);
++          urls.push(await getDownloadURL(fileRef));
++        }
++        await addDoc(collection(db, "products"), {
++          name,
++          category,
++          desc,
++          price,
++          stock: 10,
++          images: urls,
++          sellerId: user.uid,
++          createdAt: serverTimestamp()
++        });
++        setStatus(i18n.t("status.listed_product"), "green");
++      } else {
++        saveLocalProductAndRedirect(name, category, desc, price, files);
++        return;
++      }
+ 
+-    const name = prod-name.value;
+-    const category = prod-category.value;
+-    const desc = prod-desc.value;
+-    const price = Number(prod-price.value);
+-    const files = prod-images.files;
+-
+-    const listStatus = document.getElementById("list-status");
+-    listStatus.textContent = "Uploading images...";
+-
+-    const urls = [];
+-    for(let i=0; i<files.length; i++){
+-      const file = files[i];
+-      const fileRef = storageRef(storage, `products/${user.uid}/${Date.now()}_${file.name}`);
+-      await uploadBytes(fileRef, file);
+-      urls.push(await getDownloadURL(fileRef));
+-    }
++      setTimeout(() => { window.location.href = "product.html"; }, 1200);
++    });
++  }
++} catch (err) { console.warn("Product form skipped", err); }
+ 
+-    await addDoc(collection(db, "products"),{
++function saveLocalProductAndRedirect(name, category, desc, price, files) {
++  const listStatus = document.getElementById("list-status");
++  if (listStatus) {
++    listStatus.textContent = i18n.t("status.saving_locally");
++    listStatus.style.color = "green";
++  }
++  const reader = new FileReader();
++  reader.onload = function () {
++    const img = reader.result;
++    const localProducts = JSON.parse(localStorage.getItem("swadeshi_local_products") || "[]");
++    localProducts.push({
++      id: "local_" + Date.now(),
+       name,
+       category,
++      description: desc,
+       desc,
+       price,
+-      images: urls,
+-      sellerId: user.uid,
+-      createdAt: serverTimestamp()
++      stock: 10,
++      sellerId: "local",
++      images: [img]
+     });
+-
+-    listStatus.style.color = "green";
+-    listStatus.textContent = "Product listed successfully!";
+-  });
+-} catch(err){ console.warn("Product form skipped", err); }
++    localStorage.setItem("swadeshi_local_products", JSON.stringify(localProducts));
++    setTimeout(() => { window.location.href = "product.html"; }, 800);
++  };
++  reader.readAsDataURL(files[0]);
++}
+ 
+ // LOAD PRODUCTS
+ async function loadFeaturedProducts(){
+@@ -162,4 +200,4 @@ async function loadFeaturedProducts(){
+   });
+ }
+ 
+-loadFeaturedProducts();
+\ No newline at end of file
++loadFeaturedProducts().then(()=>{ try{ if(window.i18n && window.i18n.applyTranslations) window.i18n.applyTranslations(); }catch(e){} });
+\ No newline at end of file
+diff --git a/product.html b/product.html
+index 7911598..0ae9a0f 100644
+--- a/product.html
++++ b/product.html
+@@ -3,7 +3,7 @@
+ <head>
+   <meta charset="utf-8" />
+   <meta name="viewport" content="width=device-width,initial-scale=1" />
+-  <title>Product — Swadeshi</title>
++  <title>Products — Swadeshi</title>
+   <script src="https://cdn.tailwindcss.com"></script>
+   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&family=Playfair+Display:wght@400;600&display=swap" rel="stylesheet">
+   <style>
+@@ -14,99 +14,194 @@
+ </head>
+ <body class="min-h-screen">
+ 
+-  <nav class="fixed top-0 left-0 right-0 bg-white shadow px-6 py-4 z-40">
++  <nav class="fixed top-0 left-0 right-0 bg-white shadow px-4 py-3 z-40">
+     <div class="max-w-6xl mx-auto flex items-center justify-between">
+-      <a href="index.html" class="text-2xl font-bold text-[var(--primary)]">SWADESHI</a>
++      <a href="index.html" class="text-xl font-bold text-[var(--primary)]" data-i18n="footer.name">SWADESHI</a>
+       <div>
+-        <a href="customer-home.html" class="mr-4">Home</a>
+-        <a href="cart.html">Cart</a>
++        <a href="index.html" class="mr-4 text-sm" data-i18n="nav.home">Home</a>
++        <a href="cart.html" class="text-sm" data-i18n="cart.title">Cart</a>
+       </div>
+     </div>
+   </nav>
+ 
+-  <main class="pt-24 max-w-6xl mx-auto px-6">
+-    <div id="product-wrap" class="bg-white rounded-xl p-6 shadow">
+-      <p class="text-center text-gray-500">Loading product…</p>
++  <main class="pt-20 max-w-6xl mx-auto px-4 pb-12">
++    <h1 class="text-3xl font-bold text-[var(--primary)] mb-6 text-center" data-i18n="products.featuredTitle">All Products</h1>
++    <div id="product-wrap" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
++      <!-- Products will load here -->
+     </div>
+   </main>
+ 
+-<script type="module">
+-  import { initializeApp } from "https://www.gstatic.com/firebasejs/9.24.0/firebase-app.js";
+-  import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/9.24.0/firebase-firestore.js";
+-
+-  const firebaseConfig = {
+-    apiKey: "AIzaSyAs8Ee4DFiPXq3o8UgCgrLFKmLECmxiuyc",
+-    authDomain: "swadeshi-b73c1.firebaseapp.com",
+-    projectId: "swadeshi-b73c1",
+-    storageBucket: "swadeshi-b73c1.appspot.com",
+-    messagingSenderId: "976631330768",
+-    appId: "1:976631330768:web:addc77ae3062dee1a9abd5"
+-  };
+-  const app = initializeApp(firebaseConfig);
+-  const db = getFirestore(app);
+-
+-  const wrap = document.getElementById('product-wrap');
+-
+-  function getParam(name){
+-    const u = new URL(location.href);
+-    return u.searchParams.get(name);
++<script src="translations.js"></script>
++<script src="i18n.js"></script>
++
++<script>
++  // Hardcoded products - always displayed
++  const hardcodedProducts = [
++    { id: 1, name: "Handmade Wooden Bowl", description: "A beautiful handcrafted wooden bowl.", price: 499, stock: 12, sellerId: "s1", images: ["https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSrgeVlmrFrUa7Auth_L-kth6gIsCX4K9lwMg&s"] },
++    { id: 2, name: "Organic Cotton Bag", description: "Eco-friendly organic cotton bag.", price: 299, stock: 20, sellerId: "s2", images: ["https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSrhS2bfJ2xnVouMsEMS5SVvKlWvYBaIcGdwg&s"] },
++    { id: 3, name: "Handwoven Scarf", description: "Warm handwoven scarf.", price: 799, stock: 5, sellerId: "s3", images: ["https://shop.gaatha.com/image/catalog/Vankar-Babubhai-Ladhubhai/20_03_2023/06-(7).jpg"] },
++    { id: 4, name: "Ceramic Vase", description: "Elegant ceramic vase for home decor.", price: 1200, stock: 7, sellerId: "s4", images: ["https://www.jiomart.com/images/product/original/rvmxslavhh/artysta-madhubani-series-1-pottery-vase-6-9-inch-black-product-images-orvmxslavhh-p595937294-0-202212012052.jpg?im=Resize=(420,420)"] },
++    { id: 5, name: "Madhubani Painting", description: "Authentic hand-painted Madhubani art from Bihar.", price: 2500, stock: 7, sellerId: "s3", images: ["https://cdn.shopify.com/s/files/1/0582/4007/3878/files/ram-wedding.jpg?v=1635757117"] },
++    { id: 11, name: "Pashmina Stole", description: "Soft Pashmina stole handwoven in Kashmir.", price: 3500, stock: 10, sellerId: "s11", images: ["https://img500.exportersindia.com/product_images/bc-500/dir_106/3158314/pashmina-shawls-1492152238-2808401.jpeg"] },
++    { id: 12, name: "Dhokra Tribal Art Figurine", description: "Unique brass figurine made with Dhokra metal casting technique.", price: 2000, stock: 6, sellerId: "s12", images: ["https://storeassets.im-cdn.com/media-manager/realcraftsdotin/ktyz3zgjRNSpW4WR7cAf_three-dhokra-musicians-realcrafts_0x0_webp.jpg"] },
++    { id: 13, name: "Kalamkari Wall Hanging", description: "Traditional hand-painted Kalamkari textile from Andhra Pradesh.", price: 2200, stock: 8, sellerId: "s13", images: ["https://www.gangesindia.com/cdn/shop/products/45d6526c39f068b704ebaad0619a888e_1024x.jpg?v=1571611560"] },
++  ];
++
++  // Function to render a product card
++  function renderProduct(p, wrap) {
++    const id = p.id || 'unknown';
++    const img = (p.images && p.images.length > 0) ? p.images[0] : 'https://via.placeholder.com/400x300?text=No+Image';
++    const name = (p.name || 'Unnamed Product').replace(/</g, '&lt;').replace(/>/g, '&gt;');
++    const description = (p.description || p.desc || 'No description available').replace(/</g, '&lt;').replace(/>/g, '&gt;');
++    const price = p.price || 0;
++    const stock = p.stock || 0;
++    const sellerId = p.sellerId || 'unknown';
++
++    const card = document.createElement('div');
++    card.className = 'bg-white rounded-lg p-3 shadow hover:shadow-lg transition';
++    card.innerHTML = `
++      <img src="${img}" class="w-full h-48 object-cover rounded" alt="${name}" onerror="this.src='https://via.placeholder.com/400x300?text=Image+Error'" />
++      <h2 class="text-lg font-bold text-[var(--primary)] mt-2">${name}</h2>
++      <p class="text-gray-600 text-sm mt-1 line-clamp-2">${description}</p>
++      <div class="mt-1">
++        <div class="text-md font-bold text-[var(--primary)]">₹${price}</div>
++        ${stock > 0 ? `<div class="text-xs text-gray-500">Stock: ${stock}</div>` : '<div class="text-xs text-red-500">Out of Stock</div>'}
++      </div>
++      <div class="mt-2 flex gap-2">
++        <button class="addToCart bg-[var(--primary)] text-white px-3 py-1 rounded text-sm hover:opacity-90 transition" data-id="${id}" data-name="${name}" data-price="${price}" data-img="${img}" data-seller="${sellerId}" data-i18n="products.addToCart">Add to Cart</button>
++      </div>
++    `;
++    wrap.appendChild(card);
+   }
+ 
+-  async function loadProduct(){
+-    const id = getParam('id');
+-    if(!id) { wrap.innerHTML = '<p class="text-red-600">No product id provided.</p>'; return; }
+-
+-    try{
+-      const pSnap = await getDoc(doc(db,'products', id));
+-      if(!pSnap.exists()){ wrap.innerHTML = '<p class="text-red-600">Product not found.</p>'; return; }
+-      const p = pSnap.data();
+-      const imgs = p.images && p.images.length ? p.images : ['https://via.placeholder.com/600x400?text=No+Image'];
+-
+-      wrap.innerHTML = `
+-        <div class="grid md:grid-cols-2 gap-6">
+-          <div>
+-            <img id="mainImg" src="${imgs[0]}" class="w-full h-96 object-cover rounded" />
+-            <div class="flex gap-2 mt-3">
+-              ${imgs.map((u,i)=>`<img src="${u}" data-index="${i}" class="w-20 h-16 object-cover rounded cursor-pointer border">`).join('')}
+-            </div>
+-          </div>
+-          <div>
+-            <h1 class="text-2xl font-bold text-[var(--primary)]">${(p.name||'')}</h1>
+-            <p class="text-gray-600 mt-2">${(p.description||'')}</p>
+-            <div class="mt-4">
+-              <div class="text-2xl font-bold text-[var(--primary)]">₹${p.price}</div>
+-              <div class="text-sm text-gray-500">Stock: ${p.stock || 0}</div>
+-            </div>
+-            <div class="mt-6 flex gap-3">
+-              <button id="addToCart" class="bg-[var(--primary)] text-white px-4 py-2 rounded">Add to Cart</button>
+-              <a href="cart.html" class="px-4 py-2 border rounded">Go to Cart</a>
+-            </div>
+-          </div>
+-        </div>
+-      `;
+-
+-      // click thumbnails
+-      wrap.querySelectorAll('img[data-index]').forEach(img=>{
+-        img.addEventListener('click', e=>{
+-          document.getElementById('mainImg').src = e.currentTarget.src;
+-        });
++  // Function to attach cart functionality
++  function attachCartHandlers(wrap) {
++    wrap.querySelectorAll('.addToCart').forEach(btn => {
++      btn.addEventListener('click', e => {
++        const id = e.currentTarget.dataset.id;
++        const name = e.currentTarget.dataset.name;
++        const price = parseInt(e.currentTarget.dataset.price);
++        const img = e.currentTarget.dataset.img;
++        const sellerId = e.currentTarget.dataset.seller;
++        
++        const cart = JSON.parse(localStorage.getItem('swadeshi_cart') || '[]');
++        const existing = cart.find(x => x.id === id);
++        
++        if (existing) {
++          existing.qty += 1;
++        } else {
++          cart.push({ id, name, price, qty: 1, sellerId, img });
++        }
++        
++        localStorage.setItem('swadeshi_cart', JSON.stringify(cart));
++        alert(i18n.t('alerts.added_to_cart'));
++        
++        // Dispatch event to update cart count if needed
++        document.dispatchEvent(new Event('cart-updated'));
+       });
++    });
++  }
+ 
+-      document.getElementById('addToCart').addEventListener('click', async ()=>{
+-        const cart = JSON.parse(localStorage.getItem('swadeshi_cart')||'[]');
+-        const existing = cart.find(x=>x.id===id);
+-        if(existing) existing.qty += 1; else cart.push({ id, name:p.name, price:p.price, qty:1, sellerId:p.sellerId, img: imgs[0] });
+-        localStorage.setItem('swadeshi_cart', JSON.stringify(cart));
+-        alert('Added to cart');
++  function loadProducts() {
++    const wrap = document.getElementById('product-wrap');
++    if (!wrap) {
++      console.error('product-wrap element not found');
++      return;
++    }
++
++    // Clear and render hardcoded products immediately
++    wrap.innerHTML = '';
++    hardcodedProducts.forEach(p => {
++      renderProduct(p, wrap);
++    });
++
++    // Load products listed from index.html (saved locally when not logged in)
++    try {
++      const localProducts = JSON.parse(localStorage.getItem('swadeshi_local_products') || '[]');
++      localProducts.forEach(p => {
++        renderProduct({
++          id: p.id,
++          name: p.name,
++          description: p.description || p.desc,
++          price: p.price,
++          stock: p.stock || 10,
++          sellerId: p.sellerId || 'local',
++          images: p.images || []
++        }, wrap);
+       });
++    } catch (e) { console.warn('Local products load failed', e); }
++
++    // Attach cart handlers
++    attachCartHandlers(wrap);
++
++    // Re-apply translations after DOM insertion
++    if (window.i18n && window.i18n.applyTranslations) window.i18n.applyTranslations();
++
++    // Try to load Firebase products in background (optional)
++    loadFirebaseProducts(wrap);
++  }
+ 
+-    }catch(err){
+-      console.error(err);
+-      wrap.innerHTML = '<p class="text-red-600">Failed to load product.</p>';
++  // Optional: Load Firebase products
++  async function loadFirebaseProducts(wrap) {
++    try {
++      const { initializeApp } = await import("https://www.gstatic.com/firebasejs/9.24.0/firebase-app.js");
++      const { getFirestore, collection, query, getDocs, orderBy } = await import("https://www.gstatic.com/firebasejs/9.24.0/firebase-firestore.js");
++
++      const firebaseConfig = {
++        apiKey: "AIzaSyAs8Ee4DFiPXq3o8UgCgrLFKmLECmxiuyc",
++        authDomain: "swadeshi-b73c1.web.app",
++        projectId: "swadeshi-b73c1",
++        storageBucket: "swadeshi-b73c1.appspot.com",
++        messagingSenderId: "976631330768",
++        appId: "1:976631330768:web:addc77ae3062dee1a9abd5"
++      };
++
++      const app = initializeApp(firebaseConfig);
++      const db = getFirestore(app);
++      
++      let q;
++      let snap;
++      try {
++        // Try to order by createdAt if available
++        q = query(collection(db, "products"), orderBy("createdAt", "desc"));
++        snap = await getDocs(q);
++      } catch (orderError) {
++        // If orderBy fails, use simple query
++        console.warn('orderBy failed, using simple query');
++        q = query(collection(db, "products"));
++        snap = await getDocs(q);
++      }
++
++      if (!snap.empty) {
++        snap.forEach(docSnap => {
++          const p = docSnap.data();
++          renderProduct({
++            id: `firebase_${docSnap.id}`,
++            name: p.name,
++            description: p.desc || p.description,
++            price: p.price,
++            stock: p.stock || 10,
++            sellerId: p.sellerId || 'unknown',
++            images: p.images || []
++          }, wrap);
++        });
++        // Re-attach handlers for new products
++        attachCartHandlers(wrap);
++        console.log(`Loaded ${snap.size} Firebase product(s)`);
++      } else {
++        console.log('No Firebase products found');
++      }
++    } catch (err) {
++      console.warn('Firebase products failed to load, showing hardcoded products only:', err);
+     }
+   }
+ 
+-  loadProduct();
++  // Wait for DOM to be ready
++  if (document.readyState === 'loading') {
++    document.addEventListener('DOMContentLoaded', loadProducts);
++  } else {
++    loadProducts();
++  }
+ </script>
+ 
+ </body>
+diff --git a/seed-product.js b/seed-product.js
+new file mode 100644
+index 0000000..fe0a786
+--- /dev/null
++++ b/seed-product.js
+@@ -0,0 +1,70 @@
++// =======================
++// DUMMY PRODUCTS SEEDER
++// =======================
++import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
++import { getFirestore, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
++
++// Firebase config
++const firebaseConfig = {
++  apiKey: "AIzaSyAs8Ee4DFiPXq3o8UgCgrLFKmLECmxiuyc",
++  authDomain: "swadeshi-b73c1.firebaseapp.com",
++  projectId: "swadeshi-b73c1",
++  storageBucket: "swadeshi-b73c1.appspot.com",
++  messagingSenderId: "976631330768",
++  appId: "1:976631330768:web:addc77ae3062dee1a9abd5"
++};
++
++const app = initializeApp(firebaseConfig);
++const db = getFirestore(app);
++
++const dummyProducts = [
++  {
++    name: "Handmade Terracotta Pot",
++    category: "Pottery",
++    price: 350,
++    stock: 12,
++    description: "Eco-friendly terracotta planter ideal for indoor plants.",
++    images: ["https://i.imgur.com/OFvVhZD.jpeg"],
++    sellerId: "dummySeller1"
++  },
++  {
++    name: "Traditional Banarasi Saree",
++    category: "Saree",
++    price: 1200,
++    stock: 5,
++    description: "Pure banarasi handloom saree with golden zari work.",
++    images: ["https://i.imgur.com/Ja0QqgP.jpeg"],
++    sellerId: "dummySeller2"
++  },
++  {
++    name: "Wooden Hand-Carved Ganesha",
++    category: "Toys",
++    price: 650,
++    stock: 8,
++    description: "Premium wooden carved idol made by rural artisans.",
++    images: ["https://i.imgur.com/9qU2P5f.jpeg"],
++    sellerId: "dummySeller3"
++  },
++  {
++    name: "Handmade Jute Basket",
++    category: "Other",
++    price: 280,
++    stock: 15,
++    description: "Strong jute basket for multipurpose use.",
++    images: ["https://i.imgur.com/nYIjb0H.jpeg"],
++    sellerId: "dummySeller1"
++  }
++];
++
++async function seedProducts() {
++  for (let p of dummyProducts) {
++    const docRef = await addDoc(collection(db, "products"), {
++      ...p,
++      createdAt: serverTimestamp()
++    });
++    console.log(`Added product with id: ${docRef.id}`);
++  }
++  console.log("All dummy products added!");
++}
++
++seedProducts();
+diff --git a/seller-dashboard.html b/seller-dashboard.html
+index 2897fab..fb4bb57 100644
+--- a/seller-dashboard.html
++++ b/seller-dashboard.html
+@@ -26,12 +26,12 @@
+     <div class="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
+       <div class="flex items-center gap-4">
+         <a href="index.html" class="text-2xl font-bold text-[var(--primary)]"><span class="text-[var(--accent)]">SWA</span>DESHI</a>
+-        <h2 class="text-lg font-semibold text-gray-700">Seller Dashboard</h2>
++        <h2 class="text-lg font-semibold text-gray-700" data-i18n="seller.title">Seller Dashboard</h2>
+       </div>
+ 
+       <div class="flex items-center gap-3">
+-        <button id="btn-profile" class="px-4 py-2 rounded-full border border-[var(--primary)] text-[var(--primary)]">Profile</button>
+-        <a href=index.html><button id="btn-signout" class="px-4 py-2 rounded-full bg-[var(--primary)] text-white">Sign out</button></a>
++        <button id="btn-profile" class="px-4 py-2 rounded-full border border-[var(--primary)] text-[var(--primary)]" data-i18n="seller.profile">Profile</button>
++        <a href=index.html><button id="btn-signout" class="px-4 py-2 rounded-full bg-[var(--primary)] text-white" data-i18n="seller.sign_out">Sign out</button></a>
+       </div>
+     </div>
+   </header>
+@@ -49,11 +49,11 @@
+         </div>
+ 
+         <nav class="space-y-2">
+-          <button data-tab="overview" class="tab-btn w-full text-left px-4 py-3 rounded-lg bg-[var(--accent)] bg-opacity-10 font-semibold">Overview</button>
+-          <button data-tab="add" class="tab-btn w-full text-left px-4 py-3 rounded-lg hover:bg-gray-100">Add Product</button>
+-          <button data-tab="manage" class="tab-btn w-full text-left px-4 py-3 rounded-lg hover:bg-gray-100">Manage Products</button>
+-          <button data-tab="orders" class="tab-btn w-full text-left px-4 py-3 rounded-lg hover:bg-gray-100">Orders</button>
+-          <button data-tab="profile" class="tab-btn w-full text-left px-4 py-3 rounded-lg hover:bg-gray-100">Profile</button>
++          <button data-tab="overview" class="tab-btn w-full text-left px-4 py-3 rounded-lg bg-[var(--accent)] bg-opacity-10 font-semibold" data-i18n="seller.overview">Overview</button>
++          <button data-tab="add" class="tab-btn w-full text-left px-4 py-3 rounded-lg hover:bg-gray-100" data-i18n="seller.add">Add Product</button>
++          <button data-tab="manage" class="tab-btn w-full text-left px-4 py-3 rounded-lg hover:bg-gray-100" data-i18n="seller.manage">Manage Products</button>
++          <button data-tab="orders" class="tab-btn w-full text-left px-4 py-3 rounded-lg hover:bg-gray-100" data-i18n="seller.orders">Orders</button>
++          <button data-tab="profile" class="tab-btn w-full text-left px-4 py-3 rounded-lg hover:bg-gray-100" data-i18n="seller.profile">Profile</button>
+         </nav>
+       </aside>
+ 
+@@ -96,11 +96,119 @@
+               <span class="text-sm text-gray-600">Product images (multiple)</span>
+               <input id="prodImages" type="file" accept="image/*" multiple class="mt-2" />
+             </label>
+-            <div class="flex items-center space-x-3">
+-              <button id="btn-add-product" class="px-6 py-3 rounded-full bg-[var(--primary)] text-white">Add Product</button>
+-              <span id="add-status" class="text-sm text-gray-600"></span>
+-            </div>
++
++<!-- ⭐⭐⭐ AI Image Enhancer block ⭐⭐⭐ -->
++<div class="mt-6 p-5 border rounded-xl bg-white shadow space-y-3">
++  <h3 class="text-xl font-semibold">AI Image Enhancer</h3>
++  <p class="text-sm text-gray-600">
++    Upload a product image above, then optionally add instructions (for example:
++    “make colors richer and sharpen details”) and click Enhance.
++  </p>
++
++  <img id="simplePreview" class="w-48 h-48 object-cover rounded border hidden mb-2" />
++
++  <textarea
++    id="simpleEnhancePrompt"
++    class="w-full border rounded-lg p-2 text-sm"
++    rows="2"
++    placeholder="Describe how you want to enhance this photo (optional)"
++  ></textarea>
++
++  <label class="flex items-center gap-2 text-sm text-gray-700">
++    <input id="useAiEnhancer" type="checkbox" class="rounded" />
++    <span>Use AI-powered enhancement (requires backend endpoint).</span>
++  </label>
++  
++  <button
++      id="simpleEnhanceBtn"
++      class="w-full py-3 rounded-lg text-white font-medium mt-1"
++      style="background-color:#A0522D;">
++      Enhance Image
++  </button>
++
++  <p id="simpleEnhanceStatus" class="text-sm text-gray-600"></p>
++
++  <img id="simpleEnhancedImage" class="w-48 h-48 object-cover rounded border hidden mt-2" />
++</div>
++<!-- ⭐⭐⭐ End Enhancer block ⭐⭐⭐ -->
++
++<div class="flex items-center space-x-3 mt-4">
++  <button id="btn-add-product" class="px-6 py-3 rounded-full bg-[var(--primary)] text-white">Add Product</button>
++  <span id="add-status" class="text-sm text-gray-600"></span>
++</div>
+           </form>
++          <!-- AI LISTING ASSISTANT -->
++<div class="bg-white shadow-lg rounded-xl p-6 mt-6 border border-gray-200">
++
++    <h2 class="text-xl font-semibold mb-4 text-gray-800">
++        AI Listing Assistant
++    </h2>
++
++    <!-- PRODUCT TITLE -->
++    <label class="font-medium text-gray-700">Product Title</label>
++    <input id="productTitle"
++           class="border p-3 w-full rounded mt-2 mb-4 focus:ring-2 focus:ring-blue-400"
++           placeholder="Enter Product Name (Example: Handmade Jute Bag)">
++
++    <button id="generateAllBtn"
++    class="w-full text-white py-3 rounded-lg font-medium transition hover:opacity-90"
++    style="background-color:#A0522D;">
++    Generate Full AI Listing
++</button>
++
++    <!-- LOADER -->
++    <div id="loadingSpinner" class="hidden text-center mt-4">
++        <div class="animate-spin h-6 w-6 border-4 border-blue-600 border-t-transparent rounded-full mx-auto"></div>
++        <p class="text-gray-600 text-sm mt-2">Generating listing…</p>
++    </div>
++
++    <!-- RESULT SECTIONS -->
++    <div id="aiResults" class="mt-6 hidden space-y-6">
++
++        <!-- DESCRIPTION -->
++        <div>
++            <h3 class="font-semibold text-gray-700 mb-1">Description</h3>
++            <textarea id="aiDescription"
++                class="border p-3 w-full rounded bg-gray-50" rows="4"></textarea>
++        </div>
++
++        <!-- HIGHLIGHTS -->
++        <div>
++            <h3 class="font-semibold text-gray-700 mb-1">Highlights</h3>
++            <textarea id="aiHighlights"
++                class="border p-3 w-full rounded bg-gray-50" rows="3"></textarea>
++        </div>
++
++        <!-- STORY -->
++        <div>
++            <h3 class="font-semibold text-gray-700 mb-1">Artisan Story</h3>
++            <textarea id="aiStory"
++                class="border p-3 w-full rounded bg-gray-50" rows="3"></textarea>
++        </div>
++
++        <!-- PRICE -->
++        <div>
++            <h3 class="font-semibold text-gray-700 mb-1">Suggested Price (INR)</h3>
++            <input id="aiPrice"
++                class="border p-3 w-full rounded bg-gray-50" />
++        </div>
++
++        <!-- CATEGORY -->
++        <div>
++            <h3 class="font-semibold text-gray-700 mb-1">Category</h3>
++            <input id="aiCategory"
++                class="border p-3 w-full rounded bg-gray-50" />
++        </div>
++
++        <!-- TAGS -->
++        <div>
++            <h3 class="font-semibold text-gray-700 mb-1">Tags</h3>
++            <textarea id="aiTags"
++                class="border p-3 w-full rounded bg-gray-50" rows="2"></textarea>
++        </div>
++    </div>
++</div>
++
+         </div>
+ 
+         <!-- Manage Products -->
+@@ -160,8 +268,17 @@
+   </div>
+ 
+   <div id="toast" class="fixed bottom-6 right-6 bg-[var(--dark)] text-white px-4 py-2 rounded-lg hidden z-50"></div>
++<button id="seedDataBtn" 
++        class="hidden bg-red-600 text-white px-4 py-2 rounded">
++  Seed Dummy Data
++</button>
+ 
+   <!-- Load script -->
++  <script src="translations.js"></script>
++  <script src="i18n.js"></script>
+   <script type="module" src="seller-dashboard.js"></script>
++  <script type="module" src="firebase.js"></script>
++  <script src="seller-dashboard.js"></script>
++
+ </body>
+-</html>
++</html>
+\ No newline at end of file
+diff --git a/seller-dashboard.js b/seller-dashboard.js
+index 78f942c..6ef88ff 100644
+--- a/seller-dashboard.js
++++ b/seller-dashboard.js
+@@ -1,26 +1,52 @@
+-// seller-dashboard.js
+-// Fully reworked and debugged seller dashboard logic
++// seller-dashboard.js (FIXED)
++// Use <script type="module" src="seller-dashboard.js"></script> in your HTML
+ 
+ // ---------- Firebase imports (v10.x) ----------
+-import { app } from "./firebase.js";
+-
++import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+ import {
+-    getAuth,
+-    onAuthStateChanged,
+-    signOut
+-} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
++  getAuth,
++  onAuthStateChanged,
++  signOut,
++  updateProfile
++} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+ 
+ import {
+-    getFirestore
+-} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
++  getFirestore,
++  doc,
++  getDoc,
++  setDoc,
++  addDoc,
++  collection,
++  query,
++  where,
++  getDocs,
++  deleteDoc,
++  updateDoc,
++  serverTimestamp,
++  orderBy
++} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+ 
+ import {
+-    getStorage
+-} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js";
++  getStorage,
++  ref as storageRef,
++  uploadBytes,
++  getDownloadURL
++} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js";
++
++// ---------- Config (use your project config) ----------
++const firebaseConfig = {
++  apiKey: "AIzaSyAs8Ee4DFiPXq3o8UgCgrLFKmLECmxiuyc",
++  authDomain: "swadeshi-b73c1.firebaseapp.com",
++  projectId: "swadeshi-b73c1",
++  storageBucket: "swadeshi-b73c1.appspot.com",
++  messagingSenderId: "976631330768",
++  appId: "1:976631330768:web:addc77ae3062dee1a9abd5"
++};
+ 
+-const auth = getAuth(app);
+-const db = getFirestore(app);
+-const storage = getStorage(app);
++const app = initializeApp(firebaseConfig);
++const auth = getAuth();
++const db = getFirestore();
++const storage = getStorage();
+ 
+ // ---------- Helpers ----------
+ const $ = (id) => document.getElementById(id);
+@@ -50,8 +76,8 @@ let editingProductId = null;
+ onAuthStateChanged(auth, async (user) => {
+   try {
+     if (!user) {
+-      log("No logged-in user. Redirecting to login.");
+-      window.location.href = "login.html";
++      log("No logged-in user. Staying on dashboard (read-only mode).");
++      toast(i18n.t("seller.not_logged_in"));
+       return;
+     }
+ 
+@@ -64,9 +90,8 @@ onAuthStateChanged(auth, async (user) => {
+ 
+     if (!userSnap.exists()) {
+       console.warn("users doc missing for uid:", user.uid);
+-      // You might choose to create the users doc here - but we'll redirect to login for safety
+       await signOut(auth);
+-      window.location.href = "login.html";
++      toast(i18n.t("seller.account_missing"));
+       return;
+     }
+ 
+@@ -74,7 +99,7 @@ onAuthStateChanged(auth, async (user) => {
+     log("User role:", role);
+ 
+     if (role !== "seller") {
+-      log("User not a seller; redirecting to index.");
++      log("User not a seller; redirecting to home.");
+       await signOut(auth);
+       window.location.href = "index.html";
+       return;
+@@ -89,17 +114,17 @@ onAuthStateChanged(auth, async (user) => {
+       // create a minimal seller doc if missing (merge)
+       sellerProfile = {
+         name: user.displayName || "Seller",
+-        shopName: sellerProfile?.shopName || "",
+-        phone: sellerProfile?.phone || "",
+-        state: sellerProfile?.state || ""
++        shopName: "",
++        phone: "",
++        state: ""
+       };
+       await setDoc(sellerRef, sellerProfile, { merge: true });
+     }
+ 
+-    // update UI
+-    $('seller-name').textContent = sellerProfile.name || (user.displayName || "Seller");
+-    $('seller-shop').textContent = sellerProfile.shopName || "";
+-    $('seller-avatar').textContent = (sellerProfile.name || user.displayName || "S").slice(0,1).toUpperCase();
++    // update UI (guarded)
++    if (exists($('seller-name'))) $('seller-name').textContent = sellerProfile.name || (user.displayName || "Seller");
++    if (exists($('seller-shop'))) $('seller-shop').textContent = sellerProfile.shopName || "";
++    if (exists($('seller-avatar'))) $('seller-avatar').textContent = (sellerProfile.name || user.displayName || "S").slice(0,1).toUpperCase();
+ 
+     // populate profile form
+     fillProfileForm();
+@@ -110,19 +135,19 @@ onAuthStateChanged(auth, async (user) => {
+     await computeStats();
+   } catch (err) {
+     console.error("onAuthStateChanged error:", err);
+-    toast("Auth/initialization error — check console.");
++      toast(i18n.t("seller.auth_error"));
+   }
+ });
+ 
+ // ---------- Fill profile form ----------
+ function fillProfileForm() {
+   try {
+-    $('profileName').value = sellerProfile?.name || currentUser.displayName || "";
+-    $('profileEmail').value = currentUser.email || "";
+-    $('profilePhone').value = sellerProfile?.phone || "";
+-    $('profilePehchan').value = sellerProfile?.pehchan || "";
+-    $('profileShop').value = sellerProfile?.shopName || "";
+-    $('profileState').value = sellerProfile?.state || "";
++    if (exists($('profileName'))) $('profileName').value = sellerProfile?.name || currentUser.displayName || "";
++    if (exists($('profileEmail'))) $('profileEmail').value = currentUser.email || "";
++    if (exists($('profilePhone'))) $('profilePhone').value = sellerProfile?.phone || "";
++    if (exists($('profilePehchan'))) $('profilePehchan').value = sellerProfile?.pehchan || "";
++    if (exists($('profileShop'))) $('profileShop').value = sellerProfile?.shopName || "";
++    if (exists($('profileState'))) $('profileState').value = sellerProfile?.state || "";
+   } catch (err) {
+     console.warn("fillProfileForm error:", err);
+   }
+@@ -145,38 +170,65 @@ if (exists($('addProductForm'))) {
+   $('addProductForm').addEventListener('submit', async (e) => {
+     e.preventDefault();
+     try {
+-      if (!currentUser) { toast("Not authenticated"); return; }
++      if (!currentUser) { toast(i18n.t("seller.not_authenticated")); return; }
+ 
+-      const name = $('prodName').value.trim();
+-      const category = $('prodCategory').value;
+-      const price = Number($('prodPrice').value || 0);
+-      const stock = Number($('prodStock').value || 0);
+-      const description = $('prodDesc').value.trim();
+-      const files = $('prodImages').files;
++      const name = $('prodName') ? $('prodName').value.trim() : "";
++      const category = $('prodCategory') ? $('prodCategory').value : "";
++      const price = $('prodPrice' ) ? Number($('prodPrice').value || 0) : 0;
++      const stock = $('prodStock') ? Number($('prodStock').value || 0) : 0;
++      const description = $('prodDesc') ? $('prodDesc').value.trim() : "";
++      const files = $('prodImages') ? $('prodImages').files : null;
+ 
+       if (!name || !price || !stock) {
+-        toast("Please complete required fields");
++        toast(i18n.t("seller.fill_required"));
+         return;
+       }
+ 
+       if (!files || files.length === 0) {
+-        toast("Please upload at least one image");
++        toast(i18n.t("seller.upload_required"));
+         return;
+       }
+ 
+-      $('add-status').textContent = "Uploading images...";
++      if (exists($('add-status'))) $('add-status').textContent = i18n.t('status.uploading');
+       // upload images
+       const urls = [];
+       for (let i = 0; i < files.length; i++) {
+-        const file = files[i];
+-        const path = `products/${currentUser.uid}/${Date.now()}_${i}_${file.name}`;
++        let fileToUpload;
++
++        // If AI enhanced image exists -> prefer it (single enhanced image)
++        // window.enhancedImageForUpload may be:
++        // - a data URL (data:image/...)
++        // - an HTTP(S) URL (Cloudinary or other)
++        // - if it's set, we upload it once and reuse for subsequent images (so we don't upload same enhanced many times)
++        if (window.enhancedImageForUpload) {
++          // If enhancedImageForUpload is a data URL or an http URL, convert to Blob
++          try {
++            if (window.enhancedImageForUpload.startsWith('data:')) {
++              fileToUpload = dataURLtoFile(window.enhancedImageForUpload, `enhanced_${Date.now()}.jpg`);
++            } else {
++              // remote URL - fetch blob
++              const resp = await fetch(window.enhancedImageForUpload);
++              const blob = await resp.blob();
++              fileToUpload = new File([blob], `enhanced_${Date.now()}.jpg`, { type: blob.type || 'image/jpeg' });
++            }
++          } catch (err) {
++            console.warn("Failed to prepare enhanced image for upload, falling back to original file", err);
++            fileToUpload = files[i];
++          }
++        } else {
++          // Fallback: original file
++          fileToUpload = files[i];
++        }
++
++        // Upload to Firebase Storage
++        const path = `products/${currentUser.uid}/${Date.now()}_${i}_${fileToUpload.name}`;
+         const sRef = storageRef(storage, path);
+-        const uploadSnap = await uploadBytes(sRef, file);
++        const uploadSnap = await uploadBytes(sRef, fileToUpload);
+         const url = await getDownloadURL(uploadSnap.ref);
+         urls.push(url);
+       }
+ 
+-      $('add-status').textContent = "Saving product...";
++      if (exists($('add-status'))) $('add-status').textContent = "Saving product...";
+       const product = {
+         sellerId: currentUser.uid,
+         name,
+@@ -191,34 +243,50 @@ if (exists($('addProductForm'))) {
+       await addDoc(collection(db, "products"), product);
+ 
+       // reset form + refresh
+-      $('addProductForm').reset();
+-      $('add-status').textContent = "";
+-      toast("Product listed");
++      if (exists($('addProductForm'))) $('addProductForm').reset();
++      // clear enhancer state
++      window.enhancedImageForUpload = null;
++      if (exists($('add-status'))) $('add-status').textContent = "";
++      toast(i18n.t("seller.product_listed"));
+       await loadProducts();
+       await computeStats();
+ 
+     } catch (err) {
+       console.error("Add product error:", err);
+-      $('add-status').textContent = "";
+-      toast("Failed to add product — see console");
++      if (exists($('add-status'))) $('add-status').textContent = "";
++      toast(i18n.t("seller.failed_add"));
+     }
+   });
+ } else {
+   log("addProductForm not present in DOM");
+ }
+ 
++// helper: convert dataURL to File
++function dataURLtoFile(dataurl, filename) {
++  // dataurl like "data:image/jpeg;base64,...."
++  const arr = dataurl.split(',');
++  const mime = arr[0].match(/:(.*?);/)[1];
++  const bstr = atob(arr[1]);
++  let n = bstr.length;
++  const u8arr = new Uint8Array(n);
++  while (n--) {
++    u8arr[n] = bstr.charCodeAt(n);
++  }
++  return new File([u8arr], filename, { type: mime });
++}
++
+ // ---------- Load My Products ----------
+ async function loadProducts() {
+   try {
+-    $('productsGrid').innerHTML = '<p class="text-gray-500">Loading products...</p>';
++    if (exists($('productsGrid'))) $('productsGrid').innerHTML = '<p class="text-gray-500">Loading products...</p>';
+     const q = query(collection(db, "products"), where("sellerId", "==", currentUser.uid), orderBy("createdAt","desc"));
+     const snap = await getDocs(q);
+ 
+-    $('productsGrid').innerHTML = '';
+-    $('stat-products').textContent = snap.size;
++    if (exists($('productsGrid'))) $('productsGrid').innerHTML = '';
++    if (exists($('stat-products'))) $('stat-products').textContent = snap.size;
+ 
+     if (snap.empty) {
+-      $('productsGrid').innerHTML = '<p class="text-gray-600">No products yet.</p>';
++      if (exists($('productsGrid'))) $('productsGrid').innerHTML = '<p class="text-gray-600">No products yet.</p>';
+       return;
+     }
+ 
+@@ -244,7 +312,7 @@ async function loadProducts() {
+           </div>
+         </div>
+       `;
+-      $('productsGrid').appendChild(el);
++      if (exists($('productsGrid'))) $('productsGrid').appendChild(el);
+     });
+ 
+     // attach handlers
+@@ -253,12 +321,12 @@ async function loadProducts() {
+       if (!confirm("Delete this product?")) return;
+       try {
+         await deleteDoc(doc(db, "products", id));
+-        toast("Deleted");
++        toast(i18n.t("seller.deleted"));
+         await loadProducts();
+         await computeStats();
+       } catch (err) {
+         console.error("Delete error:", err);
+-        toast("Delete failed");
++        toast(i18n.t("seller.delete_failed"));
+       }
+     }));
+ 
+@@ -268,7 +336,7 @@ async function loadProducts() {
+ 
+   } catch (err) {
+     console.error("loadProducts error:", err);
+-    $('productsGrid').innerHTML = '<p class="text-red-600">Failed to load products.</p>';
++    if (exists($('productsGrid'))) $('productsGrid').innerHTML = '<p class="text-red-600">Failed to load products.</p>';
+   }
+ }
+ 
+@@ -276,17 +344,17 @@ async function loadProducts() {
+ async function openEditModal(productId) {
+   try {
+     const snap = await getDoc(doc(db, "products", productId));
+-    if (!snap.exists()) { toast("Product not found"); return; }
++    if (!snap.exists()) { toast(i18n.t("misc.product_not_found")); return; }
+     const p = snap.data();
+     editingProductId = productId;
+-    $('editName').value = p.name || '';
+-    $('editPrice').value = p.price || 0;
+-    $('editStock').value = p.stock || 0;
+-    $('editDesc').value = p.description || '';
+-    $('edit-modal').classList.remove('hidden');
++    if (exists($('editName'))) $('editName').value = p.name || '';
++    if (exists($('editPrice'))) $('editPrice').value = p.price || 0;
++    if (exists($('editStock'))) $('editStock').value = p.stock || 0;
++    if (exists($('editDesc'))) $('editDesc').value = p.description || '';
++    if (exists($('edit-modal'))) $('edit-modal').classList.remove('hidden');
+   } catch (err) {
+     console.error("openEditModal error:", err);
+-    toast("Could not open editor");
++    toast(i18n.t("seller.could_not_open"));
+   }
+ }
+ 
+@@ -294,7 +362,7 @@ async function openEditModal(productId) {
+ if (exists($('editForm'))) {
+   $('editForm').addEventListener('submit', async (e) => {
+     e.preventDefault();
+-    if (!editingProductId) { toast("No product selected"); return; }
++    if (!editingProductId) { toast(i18n.t("seller.no_product_selected")); return; }
+ 
+     try {
+       const name = $('editName').value.trim();
+@@ -323,29 +391,29 @@ if (exists($('editForm'))) {
+       }
+ 
+       await updateDoc(doc(db, "products", editingProductId), updateData);
+-      $('edit-modal').classList.add('hidden');
+-      toast("Product updated");
++      if (exists($('edit-modal'))) $('edit-modal').classList.add('hidden');
++      toast(i18n.t("seller.updated"));
+       await loadProducts();
+     } catch (err) {
+       console.error("edit save error:", err);
+-      toast("Update failed");
++      toast(i18n.t("seller.update_failed"));
+     }
+   });
+ 
+-  $('editCancel').addEventListener('click', () => $('edit-modal').classList.add('hidden'));
++  if (exists($('editCancel'))) $('editCancel').addEventListener('click', () => $('edit-modal').classList.add('hidden'));
+ }
+ 
+ // ---------- Load Orders ----------
+ async function loadOrders() {
+   try {
+-    $('ordersList').innerHTML = '<p class="text-gray-500">Loading orders...</p>';
++    if (exists($('ordersList'))) $('ordersList').innerHTML = '<p class="text-gray-500">Loading orders...</p>';
+     const q = query(collection(db, "orders"), where("sellerId", "==", currentUser.uid), orderBy("date","desc"));
+     const snap = await getDocs(q);
+-    $('ordersList').innerHTML = '';
++    if (exists($('ordersList'))) $('ordersList').innerHTML = '';
+     if (snap.empty) {
+-      $('ordersList').innerHTML = '<p class="text-gray-600">No orders yet.</p>';
+-      $('stat-orders').textContent = '0';
+-      $('stat-sales').textContent = '0';
++      if (exists($('ordersList'))) $('ordersList').innerHTML = '<p class="text-gray-600">No orders yet.</p>';
++      if (exists($('stat-orders'))) $('stat-orders').textContent = '0';
++      if (exists($('stat-sales'))) $('stat-sales').textContent = '0';
+       return;
+     }
+ 
+@@ -367,29 +435,27 @@ async function loadOrders() {
+             <p class="text-sm text-gray-500">${escapeHtml(o.orderStatus || '')}</p>
+           </div>
+         </div>`;
+-      $('ordersList').appendChild(card);
++      if (exists($('ordersList'))) $('ordersList').appendChild(card);
+     });
+ 
+-    $('stat-orders').textContent = String(snap.size);
+-    $('stat-sales').textContent = String(totalSales);
++    if (exists($('stat-orders'))) $('stat-orders').textContent = String(snap.size);
++    if (exists($('stat-sales'))) $('stat-sales').textContent = String(totalSales);
+ 
+   } catch (err) {
+     console.error("loadOrders error:", err);
+-    $('ordersList').innerHTML = '<p class="text-red-600">Failed to load orders.</p>';
++    if (exists($('ordersList'))) $('ordersList').innerHTML = '<p class="text-red-600">Failed to load orders.</p>';
+   }
+ }
+ 
+ // ---------- Compute Stats (fallback) ----------
+ async function computeStats() {
+   try {
+-    // products count already set in loadProducts
+-    // recompute sales/orders if needed
+     const q = query(collection(db, "orders"), where("sellerId", "==", currentUser.uid));
+     const snap = await getDocs(q);
+     let total = 0;
+     snap.forEach(d => total += Number(d.data().totalAmount || 0));
+-    $('stat-sales').textContent = String(total);
+-    $('stat-orders').textContent = String(snap.size);
++    if (exists($('stat-sales'))) $('stat-sales').textContent = String(total);
++    if (exists($('stat-orders'))) $('stat-orders').textContent = String(snap.size);
+   } catch (err) {
+     console.warn("computeStats error:", err);
+   }
+@@ -426,12 +492,12 @@ if (exists($('btn-save-profile'))) {
+       await setDoc(doc(db, "users", currentUser.uid), { name: newName }, { merge: true });
+ 
+       // update UI
+-      $('seller-name').textContent = newName;
+-      $('seller-avatar').textContent = newName.charAt(0).toUpperCase();
+-      toast("Profile updated");
++      if (exists($('seller-name'))) $('seller-name').textContent = newName;
++      if (exists($('seller-avatar'))) $('seller-avatar').textContent = newName.charAt(0).toUpperCase();
++      toast(i18n.t("seller.profile_updated"));
+     } catch (err) {
+       console.error("save profile error:", err);
+-      toast("Failed to save profile — see console");
++      toast(i18n.t("seller.failed_save_profile"));
+     }
+   });
+ }
+@@ -441,10 +507,10 @@ if (exists($('btn-signout'))) {
+   $('btn-signout').addEventListener('click', async () => {
+     try {
+       await signOut(auth);
+-      window.location.href = "login.html";
++      window.location.href = "index.html";
+     } catch (err) {
+       console.error("signout error:", err);
+-      toast("Sign out failed");
++      toast(i18n.t("seller.signout_failed"));
+     }
+   });
+ }
+@@ -457,6 +523,304 @@ function escapeHtml(s) {
+     .replaceAll('<','&lt;')
+     .replaceAll('>','&gt;');
+ }
++function cleanPrice(raw) {
++  if (!raw) return "";
++
++  // Convert to string
++  let txt = String(raw);
++
++  // Remove currency symbols + words
++  txt = txt
++    .replace(/₹/g, "")
++    .replace(/rs/gi, "")
++    .replace(/rupees/gi, "")
++    .replace(/inr/gi, "")
++    .replace(/approx/gi, "")
++    .replace(/around/gi, "")
++    .replace(/[^\d\-–to. ]/g, "")  // remove junk
++    .trim();
++
++  // Normalize range separators to '-' only
++  txt = txt.replace(/to|–/gi, "-");
++
++  // Extract numbers
++  const nums = txt.match(/\d+/g);
++  if (!nums) return "";
++
++  if (nums.length === 1) {
++    return `₹${nums[0]}`;        // single value
++  }
+ 
+-// ---------- End of file ----------
+-log("seller-dashboard.js loaded");
++  // Two values → format as a clean range
++  return `₹${nums[0]} - ₹${nums[1]}`;
++}
++
++// ---------- AI Listing Assistant (safe) ----------
++function getListingTitle() {
++  const aiTitle = $('aiTitle') ? $('aiTitle').value.trim() : "";
++  const prodName = $('prodName') ? $('prodName').value.trim() : "";
++  return aiTitle || prodName || "";
++}
++
++if (exists($('generateAllBtn'))) {
++  $('generateAllBtn').addEventListener('click', async () => {
++    const title = getListingTitle();
++    if (!title) { alert(i18n.t("seller.enter_product_title")); return; }
++
++    const btn = $('generateAllBtn');
++    const loader = $('loadingSpinner');
++    const results = $('aiResults');
++
++    try {
++      btn.disabled = true;
++      btn.innerText = "Generating…";
++      if (loader) loader.classList.remove("hidden");
++      if (results) results.classList.add("hidden");
++
++      // NOTE: Do NOT hard-code API keys in client-side code. Use a backend to proxy requests or set an environment variable on the server.
++      const OPENAI_KEY = "REDACTED";
++      if (!OPENAI_KEY || OPENAI_KEY === "REDACTED" || OPENAI_KEY === "YOUR_OPENAI_API_KEY") {
++        alert(i18n.t("seller.openai_key_missing"));
++        return;
++      }
++
++      const rsp = await fetch("https://api.openai.com/v1/chat/completions", {
++        method: "POST",
++        headers: {
++          "Content-Type": "application/json",
++          "Authorization": `Bearer ${OPENAI_KEY}`
++        },
++        body: JSON.stringify({
++          model: "gpt-4o-mini",
++          messages: [
++            {
++              role: "system",
++              content:
++`Generate clean JSON only.
++Return JSON ONLY:
++{
++ "description": "",
++ "highlights": "",
++ "story": "",
++ "price": "",
++ "category": "",
++ "tags": ""
++}`
++            },
++            { role: "user", content: `Generate full listing details for handmade product: ${title}` }
++          ],
++          max_tokens: 350
++        })
++      });
++
++      const data = await rsp.json();
++
++      // parse safely
++      let parsed = null;
++      try {
++        parsed = JSON.parse(data.choices[0].message.content);
++      } catch (err) {
++        // try substring parse
++        const txt = (data.choices && data.choices[0] && data.choices[0].message) ? data.choices[0].message.content : "";
++        const first = txt.indexOf('{'); const last = txt.lastIndexOf('}');
++        if (first !== -1 && last !== -1) {
++          try { parsed = JSON.parse(txt.slice(first, last + 1)); } catch (e) { parsed = null; }
++        }
++      }
++
++      if (!parsed) {
++        alert(i18n.t("seller.ai_unexpected_output"));
++        console.error("AI response:", data);
++      } else {
++        if (exists($('aiDescription'))) $('aiDescription').value = parsed.description || "";
++        if (exists($('aiHighlights'))) $('aiHighlights').value = parsed.highlights || "";
++        if (exists($('aiStory'))) $('aiStory').value = parsed.story || "";
++        if (exists($('aiPrice')))
++    $('aiPrice').value = cleanPrice(parsed.price);
++
++        if (exists($('aiCategory'))) $('aiCategory').value = parsed.category || "";
++        if (exists($('aiTags'))) $('aiTags').value = parsed.tags || "";
++        if (results) results.classList.remove("hidden");
++
++        // optionally auto-fill main fields
++        if (parsed.description && exists($('prodDesc'))) $('prodDesc').value = parsed.description;
++        if (parsed.category && exists($('prodCategory'))) $('prodCategory').value = parsed.category;
++      }
++
++    } catch (err) {
++      console.error("AI Listing error:", err);
++      alert("AI failed to generate listing. Check console.");
++    } finally {
++      if (loader) loader.classList.add("hidden");
++      if (btn) { btn.innerText = "Generate Full AI Listing"; btn.disabled = false; }
++    }
++  });
++}
++
++// =============================
++// SIMPLE IMAGE ENHANCER (NO API)
++// =============================
++
++// Preview original image (if element exists)
++if (exists($('prodImages')) && exists($('simplePreview'))) {
++  $('prodImages').addEventListener("change", (e) => {
++    const file = e.target.files && e.target.files[0];
++    if (!file) return;
++    $('simplePreview').src = URL.createObjectURL(file);
++    $('simplePreview').classList.remove("hidden");
++  });
++}
++
++// Enhance button
++if (exists($('simpleEnhanceBtn'))) {
++  $('simpleEnhanceBtn').addEventListener("click", async () => {
++    if (!exists($('prodImages'))) return alert("Upload image first");
++    const file = $('prodImages').files[0];
++    if (!file) return alert("Upload image first");
++
++    if (exists($('simpleEnhanceStatus'))) $('simpleEnhanceStatus').textContent = "Enhancing...";
++
++    const img = new Image();
++    img.src = URL.createObjectURL(file);
++
++    img.onload = () => {
++      const canvas = document.createElement("canvas");
++      canvas.width = img.width;
++      canvas.height = img.height;
++
++      const ctx = canvas.getContext("2d");
++
++      // Draw original
++      ctx.drawImage(img, 0, 0);
++
++      // Apply simple improvements
++      ctx.filter = "brightness(1.15) contrast(1.1) saturate(1.2)";
++
++      ctx.drawImage(img, 0, 0);
++
++      // Get final image DataURL
++      const enhancedDataURL = canvas.toDataURL("image/jpeg", 0.9);
++
++      // Show enhanced output if element exists
++      if (exists($('simpleEnhancedImage'))) {
++        $('simpleEnhancedImage').src = enhancedDataURL;
++        $('simpleEnhancedImage').classList.remove("hidden");
++      }
++
++      // Save for Firebase upload (dataURL)
++      window.enhancedImageForUpload = enhancedDataURL;
++
++      if (exists($('simpleEnhanceStatus'))) $('simpleEnhanceStatus').textContent = "Enhanced successfully!";
++    };
++
++    img.onerror = (err) => {
++      console.error("Image load error:", err);
++      if (exists($('simpleEnhanceStatus'))) $('simpleEnhanceStatus').textContent = "Enhance failed.";
++    };
++  });
++}
++
++log("seller-dashboard.js finalised");
++// ===========================
++// DUMMY DATA SEEDER (FIXED)
++// ===========================
++import { Timestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
++
++if (exists($('seedDataBtn'))) {
++  $('seedDataBtn').addEventListener('click', async () => {
++
++    if (!currentUser) return alert("Login first");
++
++    const sellerId = currentUser.uid;
++
++    // SAMPLE PRODUCT LIST
++    const dummyProducts = [
++      {
++        name: "Handmade Terracotta Pot",
++        category: "Pottery",
++        price: 350,
++        stock: 12,
++        description: "Eco-friendly terracotta planter ideal for indoor plants.",
++        images: ["https://i.imgur.com/OFvVhZD.jpeg"]
++      },
++      {
++        name: "Traditional Banarasi Saree",
++        category: "Saree",
++        price: 1200,
++        stock: 5,
++        description: "Pure banarasi handloom saree with golden zari work.",
++        images: ["https://i.imgur.com/Ja0QqgP.jpeg"]
++      },
++      {
++        name: "Wooden Hand-Carved Ganesha",
++        category: "Toys",
++        price: 650,
++        stock: 8,
++        description: "Premium wooden carved idol made by rural artisans.",
++        images: ["https://i.imgur.com/9qU2P5f.jpeg"]
++      },
++      {
++        name: "Handmade Jute Basket",
++        category: "Other",
++        price: 280,
++        stock: 15,
++        description: "Strong jute basket for multipurpose use.",
++        images: ["https://i.imgur.com/nYIjb0H.jpeg"]
++      }
++    ];
++
++    // ADD PRODUCTS
++    for (let p of dummyProducts) {
++      await addDoc(collection(db, "products"), {
++        sellerId,
++        ...p,
++        createdAt: serverTimestamp()
++      });
++    }
++
++    console.log("Dummy products added.");
++
++    // SAMPLE ORDERS
++    const dummyOrders = [
++      {
++        productName: "Handmade Terracotta Pot",
++        customerName: "Aarav",
++        quantity: 2,
++        totalAmount: 700,
++        orderStatus: "Delivered",
++        sellerId,
++        date: Timestamp.fromDate(new Date())
++      },
++      {
++        productName: "Traditional Banarasi Saree",
++        customerName: "Riya",
++        quantity: 1,
++        totalAmount: 1200,
++        orderStatus: "Delivered",
++        sellerId,
++        date: Timestamp.fromDate(new Date())
++      },
++      {
++        productName: "Handmade Jute Basket",
++        customerName: "Mohan",
++        quantity: 3,
++        totalAmount: 840,
++        orderStatus: "Shipped",
++        sellerId,
++        date: Timestamp.fromDate(new Date())
++      }
++    ];
++
++    // ADD ORDERS
++    for (let o of dummyOrders) {
++      await addDoc(collection(db, "orders"), o);
++    }
++
++    console.log("Dummy orders added.");
++
++    alert("Dummy data added!");
++    await loadProducts();
++    await loadOrders();
++    await computeStats();
++  });
++}
+diff --git a/translations.js b/translations.js
+new file mode 100644
+index 0000000..e5e569a
+--- /dev/null
++++ b/translations.js
+@@ -0,0 +1,103 @@
++// translations.js — simple translation dictionary
++window.TRANSLATIONS = {
++  en: {
++    nav: {
++      home: "Home",
++      kalakriti: "Kalakriti!",
++      canvas: "Canvas",
++      categories: "Categories",
++      sell: "Sell Products",
++      shop: "Shop",
++      contact: "Contact Us"
++    },
++    login: { login: "Login", logout: "Logout" },
++    hero: { title: "Empowering Local Artisans", description: "Discover unique handcrafted treasures that tell stories of tradition and passion.", cta: "Shop Now" },
++    kalakriti: { description: "Meet Kalakriti! — your friendly AI assistant ready to help artisans and customers alike.", cta: "Chat now" },
++    canvas: { title: "Canvas", upload: "Upload Product Image", promptLabel: "Enter Design Prompt", prompt: "Describe how you want to enhance your product...", mode_local: "Local Enhance", mode_ai: "AI Generate", strength: "Strength", style_label: "Style", style_natural: "Natural", style_artistic: "Artistic", style_vintage: "Vintage", generate: "Generate", download: "Download", processing: "Generating...", idle: "Idle", sell: "Sell This Product" },
++    categories: { title: "Our Artisan Categories", pottery: "Pottery", saree: "Silk Sarees", toys: "Handmade Toys", explore: "Explore Collection" },
++    products: { featuredTitle: "Featured Products", addToCart: "Add to Cart" },
++    sell: { title: "Sell Your Products", name: "Product Name", category: "Category", description: "Description", price: "Price (₹)", images: "Product Images", list: "List Product", saving: "Saving locally... Redirecting to products page." },
++    contact: { title: "Contact Us", name: "Your Name", email: "Your Email", message: "Your Message", send: "Send Message" },
++    footer: { name: "Swadeshi", tagline: "Empowering local artisans to showcase and sell their unique handmade products.", quickLinks: "Quick Links", categories: "Categories", contactInfo: "Contact Info" },
++    alerts: { added_to_cart: "Added to Cart!", upload_image: "Upload an image!", fill_fields: "Please fill all fields (name, category, description, price).", only_sellers: "Only sellers can list to the marketplace. Saving locally and redirecting to products page." },
++    status: { saving_locally: "Saving locally... Redirecting to products page.", listed_product: "Product listed! Redirecting to products page...", uploading: "Uploading images..." },
++    cart: { title: "Your Cart", empty_message: "Your cart is empty.", checkout: "Checkout" },
++    seller: { title: "Seller Dashboard", overview: "Overview", add: "Add Product", manage: "Manage Products", orders: "Orders", profile: "Profile", sign_out: "Sign out", not_logged_in: "You are not logged in. Some seller actions are disabled.", account_missing: "Account info missing. Please sign in again from the home page.", auth_error: "Auth/initialization error — check console.", not_authenticated: "Not authenticated", fill_required: "Please complete required fields", upload_required: "Please upload at least one image", product_listed: "Product listed", failed_add: "Failed to add product — see console", deleted: "Deleted", delete_failed: "Delete failed", could_not_open: "Could not open editor", no_product_selected: "No product selected", updated: "Product updated", update_failed: "Update failed", profile_updated: "Profile updated", failed_save_profile: "Failed to save profile — see console", signout_failed: "Sign out failed", enter_product_title: "Enter a product title first!", openai_key_missing: "OpenAI key missing. Set OPENAI_KEY in the file to use AI features.", ai_unexpected_output: "AI returned unexpected output. Check console." },
++    misc: { product_not_found: "Product not found", coming_soon: "Product detail page coming soon!", added_to_cart_toast: "Added to cart!" }
++  },
++  hi: {
++    nav: {
++      home: "होम",
++      kalakriti: "कलाकृति!",
++      canvas: "कैनवास",
++      categories: "श्रेणियाँ",
++      sell: "उत्पाद बेचें",
++      shop: "दुकान",
++      contact: "संपर्क करें"
++    },
++    login: { login: "लॉगिन", logout: "लॉगआउट" },
++    hero: { title: "स्थानीय कारीगरों को सशक्त बनाना", description: "ऐसी अनोखी हस्तशिल्प चीज़ें खोजें जो परंपरा और जुनून की कहानियाँ कहती हैं।", cta: "अभी खरीदें" },
++    kalakriti: { description: "मिलिए कलाकृति से! — आपकी मित्रवत AI सहायक जो कारीगरों और ग्राहकों की मदद के लिए तैयार है।", cta: "चैट करें" },
++    canvas: { title: "कैनवास", upload: "उत्पाद छवि अपलोड करें", promptLabel: "डिज़ाइन संकेत दर्ज करें", prompt: "अपनी उत्पाद को किस तरह बढ़ाना चाहते हैं, बताइए...", mode_local: "स्थानीय सुधार", mode_ai: "AI जनरेट करें", strength: "मजबूती", style_label: "शैली", style_natural: "प्राकृतिक", style_artistic: "कलात्मक", style_vintage: "विंटेज", generate: "बनाएँ", download: "डाउनलोड करें", processing: "बना रहा है...", idle: "सक्रिय नहीं", sell: "यह उत्पाद बेचें" },
++    categories: { title: "हमारी कारीगर श्रेणियाँ", pottery: "मिट्टी के बर्तन", saree: "रेशमी साड़ियाँ", toys: "हस्तनिर्मित खिलौने", explore: "कलेक्शन देखें" },
++    products: { featuredTitle: "प्रमुख उत्पाद", addToCart: "कार्ट में जोड़ें" },
++    sell: { title: "अपने उत्पाद बेचें", name: "उत्पाद का नाम", category: "श्रेणी", description: "विवरण", price: "कीमत (₹)", images: "उत्पाद छवियाँ", list: "उत्पाद सूचीबद्ध करें", saving: "स्थानीय रूप से सहेजा जा रहा है... उत्पाद पृष्ठ पर जा रहे हैं।" },
++    contact: { title: "संपर्क करें", name: "आपका नाम", email: "आपका ईमेल", message: "आपका संदेश", send: "संदेश भेजें" },
++    footer: { name: "स्वदेशी", tagline: "स्थानीय कारीगरों को उनके अद्वितीय हस्तनिर्मित उत्पाद प्रदर्शित करने और बेचने के लिए सशक्त बनाना।", quickLinks: "त्वरित लिंक", categories: "श्रेणियाँ", contactInfo: "संपर्क जानकारी" },
++    alerts: { added_to_cart: "कार्ट में जोड़ा गया!", upload_image: "कृपया एक छवि अपलोड करें!", fill_fields: "कृपया सभी फ़ील्ड भरें (नाम, श्रेणी, विवरण, कीमत)।", only_sellers: "केवल विक्रेता मार्केटप्लेस में सूचीबद्ध कर सकते हैं। स्थानीय रूप से सहेजा जा रहा है और उत्पाद पृष्ठ पर जा रहे हैं।" },
++    status: { saving_locally: "स्थानीय रूप से सहेजा जा रहा है... उत्पाद पृष्ठ पर जा रहे हैं।", listed_product: "उत्पाद सूचीबद्ध किया गया! उत्पाद पृष्ठ पर जा रहे हैं...", uploading: "छवियाँ अपलोड की जा रही हैं..." },
++    cart: { title: "आपकी कार्ट", empty_message: "आपकी कार्ट खाली है।", checkout: "चेक आउट" },
++    seller: { title: "विक्रेता डैशबोर्ड", overview: "ओवरव्यू", add: "उत्पाद जोड़ें", manage: "उत्पाद प्रबंधित करें", orders: "ऑर्डर", profile: "प्रोफ़ाइल", sign_out: "साइन आउट", not_logged_in: "आप लॉग इन नहीं हैं। कुछ विक्रेता क्रियाएँ अक्षम हैं।", account_missing: "खाता जानकारी गायब है। कृपया होम पेज से पुनः साइन इन करें।", auth_error: "प्रमाणीकरण/इनिशियलाइज़ेशन त्रुटि — कंसोल देखें।", not_authenticated: "प्रमाणीकरण नहीं हुआ", fill_required: "कृपया आवश्यक फ़ील्ड पूरी करें", upload_required: "कृपया कम से कम एक छवि अपलोड करें", product_listed: "उत्पाद सूचीबद्ध", failed_add: "उत्पाद जोड़ने में विफल — कंसोल देखें", deleted: "हटाया गया", delete_failed: "हटाना विफल", could_not_open: "संपादक खोलने में असमर्थ", no_product_selected: "कोई उत्पाद चयनित नहीं", updated: "उत्पाद अपडेट किया गया", update_failed: "अपडेट विफल", profile_updated: "प्रोफ़ाइल अपडेट की गई", failed_save_profile: "प्रोफ़ाइल सहेजने में विफल — कंसोल देखें", signout_failed: "साइन आउट विफल", enter_product_title: "कृपया पहले उत्पाद का शीर्षक दर्ज करें!", openai_key_missing: "OpenAI कुंजी गायब है। AI सुविधाओं का उपयोग करने के लिए फ़ाइल में OPENAI_KEY सेट करें।", ai_unexpected_output: "AI ने अप्रत्याशित आउटपुट लौटाया। कंसोल देखें।" },
++    misc: { product_not_found: "उत्पाद नहीं मिला", coming_soon: "उत्पाद विवरण पृष्ठ जल्द आ रहा है!", added_to_cart_toast: "कार्ट में जोड़ा गया!" }
++  },
++  kn: {
++    nav: { home: "ಮನೆ", kalakriti: "ಕಲಾಕೃತಿ!", canvas: "ಕ್ಯಾನ್‍ವಾಸ್", categories: "ವರ್ಗಗಳು", sell: "ಉತ್ಪನ್ನಗಳನ್ನು ಮಾರಾಟ ಮಾಡಿ", shop: "ದुकಾನ", contact: "ಸಂಪರ್ಕಿಸಿ" },
++    login: { login: "ಲಾಗಿನ್", logout: "ಲಾಗ್ಔಟ್" },
++    hero: { title: "ಸ್ಥಳೀಯ ಕಲಾಕಾರರಿಗೆ ಶಕ್ತಿ ನೀಡುವುದು", description: "ಸಂಪ್ರದಾಯ ಮತ್ತು ಪ್ರೀತಿ ಕಥೆಗಳನ್ನ ಹೇಳುವ ವಿಶಿಷ್ಟ ಹಸ್ತಕಲಾ ಖಜಾನೆಗಳನ್ನು ಕಂಡುಹೊರತು ಮಾಡಿ.", cta: "ಅದನ್ನು ಖರೀದಿಸಿ" },
++    kalakriti: { description: "ಕಲಾಕೃತಿಯನ್ನು ಪರಿಚಯಿಸಿ! — ಕಲೆಗಾರರು ಮತ್ತು ಗ್ರಾಹಕರಿಗೆ ಸಹಾಯ ಮಾಡಲು ಸಿದ್ಧವಾಗಿರುವ ನಿಮ್ಮ ಸ್ನೇಹಮಯ AI ಸಹಾಯಕ.", cta: "ಚಾಟ್ ಮಾಡು" },
++    canvas: { title: "ಕ್ಯಾನ್‍ವಾಸ್", upload: "ಉತ್ಪನ್ನದ ಚಿತ್ರ ಅಪ್‌ಲೋಡ್ ಮಾಡಿ", promptLabel: "ಡಿಸೈನ್ ಪ್ರಾಂಪ್ಟ್ ನಮೂದಿಸಿ", prompt: "ನೀವು ನಿಮ್ಮ ಉತ್ಪನ್ನವನ್ನು ಹೇಗೆ ಸುಧಾರಿಸಲು ಬಯಸುತ್ತೀರೋ ವಿವರಿಸಿ...", mode_local: "ಸ್ಥಳೀಯ ಸುಧಾರಣೆ", mode_ai: "AI ಉತ್ಪಾದಿಸಿ", strength: "ಶಕ್ತಿಶಾಲಿ", style_label: "ಶೈಲಿ", style_natural: "ಸ್ವಾಭಾವಿಕ", style_artistic: "ಕಲೆಮಯ", style_vintage: "ವನ್ತೇಜ್", generate: "ರಚಿಸಿ", download: "ಡೌನ್‌ಲೋಡ್", processing: "ಉತ್ಪಾದನೆ ನಡೆಯುತ್ತಿದೆ...", idle: "ಬೆರೆತಿಲ್ಲ", sell: "ಈ ಉತ್ಪನ್ನವನ್ನು ಮಾರಾಟಿಸಿ" },
++    categories: { title: "ನಮ್ಮ ಕಲೆಗಾರರ ವರ್ಗಗಳು", pottery: "ಮಣ್ಣಿನ ಆರ್ಟಿಕಲ್ಸ್", saree: "ರೆಶ್ಮೆ ಸೀರೆಗಳು", toys: "ಹಸ್ತಪ್ರಯೋಜಿತ ಆಟಿಕೆಗಳು", explore: "ಸಂಗ್ರಹವನ್ನು ಅನ್ವೇಷಿಸಿ" },
++    products: { featuredTitle: "ಪ್ರಮುಖ ಉತ್ಪನ್ನಗಳು", addToCart: "ಕಾರ್ಟ್‌ಗೆ ಸೇರಿಸಿ" },
++    sell: { title: "ನಿಮ್ಮ ಉತ್ಪನ್ನಗಳನ್ನು ಮಾರಾಟ ಮಾಡಿ", name: "ಉತ್ಪನ್ನದ ಹೆಸರು", category: "ವರ್ಗ", description: "ವಿವರಣೆ", price: "ಬೆಲೆ (₹)", images: "ಉತ್ಪನ್ನದ ಚಿತ್ರಗಳು", list: "ಉತ್ಪನ್ನವನ್ನು ಪಟ್ಟಿ ಮಾಡಿ", saving: "ಸ್ಥಳೀಯವಾಗಿ ಉಳಿಸಲಾಗುತ್ತಿದೆ... ಉತ್ಪನ್ನ ಪುಟಕ್ಕೆ ಹೋಗಲಾಗುತ್ತಿದೆ." },
++    contact: { title: "ಸಂಪರ್ಕಿಸಿ", name: "ನಿಮ್ಮ ಹೆಸರು", email: "ನಿಮ್ಮ ಇಮೇಲ್", message: "ನಿಮ್ಮ ಸಂದೇಶ", send: "ಸಂದೇಶ ಕಳುಹಿಸಿ" },
++    footer: { name: "ಸ್ವದೇಶಿ", tagline: "ಸ್ಥಳೀಯ ಕಲೆಗಾರರಿಗೆ ಅವರ ವಿಶಿಷ್ಟ ಹಸ್ತಕಲೆ ಉತ್ಪನ್ನಗಳನ್ನು ಪ್ರದರ್ಶಿಸಲು ಮತ್ತು ಮಾರಾಟ ಮಾಡಲು ಶಕ್ತಿಪಡಿಸುವುದು.", quickLinks: "ತ್ವರಿತ ಲಿಂಕ್‌ಗಳು", categories: "ವರ್ಗಗಳು", contactInfo: "ಸಂಪರ್ಕ ಮಾಹಿತಿಗಳು" },
++    alerts: { added_to_cart: "ಕಾರ್ಟ್‌ಗೆ ಸೇರಿಸಲಾಗಿದೆ!", upload_image: "ದಯವಿಟ್ಟು ಚಿತ್ರವನ್ನು ಅಪ್‌ಲೋಡ್ ಮಾಡಿ!", fill_fields: "ದಯವಿಟ್ಟು ಎಲ್ಲಾ ಕ್ಷೇತ್ರಗಳನ್ನು ಭರ್ತಿ ಮಾಡಿ (ಹೆಸರು, ವರ್ಗ, ವಿವರ, ಬೆಲೆ).", only_sellers: "ಮಾರ್ಕೆಟ್ಪ್ಲೇಸ್‌ಗೆ ಪಟ್ಟಿ ಮಾಡಬೇಕಾದವರು ಮಾತ್ರ ಮಾರಾಟಗಾರರು. ಸ್ಥಳೀಯವಾಗಿ ಉಳಿಸಲಾಗುತ್ತಿದೆ ಮತ್ತು ಉತ್ಪನ್ನ ಪುಟಕ್ಕೆ ಕಳುಹಿಸಲಾಗುವುದು." },
++    status: { saving_locally: "ಸ್ಥಳೀಯವಾಗಿ ಉಳಿಸಲಾಗುತ್ತಿದೆ... ಉತ್ಪನ್ನ ಪುಟಕ್ಕೆ ಹೋಗಲಾಗುತ್ತಿದೆ.", listed_product: "ಉತ್ಪನ್ನ ಪಟ್ಟಿ ಮಾಡಲಾಗಿದೆ! ಉತ್ಪನ್ನ ಪುಟಕ್ಕೆ ಹೋಗಲಾಗುತ್ತಿದೆ...", uploading: "ಚಿತ್ರಗಳನ್ನು ಅಪ್‌ಲೋಡ್ ಮಾಡಲಾಗುತ್ತಿದೆ..." },
++    cart: { title: "ನಿಮ್ಮ ಕಾರ್ಟ್", empty_message: "ನಿಮ್ಮ ಕಾರ್ಟ್ ಖಾಲಿಯಾಗಿದೆ.", checkout: "ಚೆಕ್ಔಟ್" },
++    seller: { title: "ವಿಕ್ರೇತೃ ಡ್ಯಾಶ್‌ಬೋರ್ಡ್", overview: "ಅವಲೋಕನ", add: "ಉತ್ಪನ್ನ ಸೇರಿಸಿ", manage: "ಉತ್ಪನ್ನಗಳನ್ನು ನಿರ್ವಹಿಸಿ", orders: "ಆರ್ಡರ್ಸ್", profile: "ಪ್ರೊಫೈಲ್", sign_out: "ಸೈನ್ ಔಟ್", not_logged_in: "ನೀವು ಲಾಗಿನ್ ಆಗಿಲ್ಲ. ಕೆಲವು ವಿಕ್ರೇತೃ ಕಾರ್ಯಗಳು ನಿಷ್ಕ್ರಿಯವಾಗಿವೆ.", account_missing: "ಖಾತೆ ಮಾಹಿತಿ ಇರುವುದಿಲ್ಲ. ದಯವಿಟ್ಟು ಹೋಂ ಪೇಜ್ ನಿಂದ ಮರು ಪ್ರವೇಶಿಸಿ.", auth_error: "ಪ್ರಮಾಣಿ/ಆರಂಬದ ದೋಷ — ಕನ್ಸೋಲ್ ಪರಿಶೀಲಿಸಿ.", not_authenticated: "ಪ್ರಮಾಣಿ/ಚೇತನಗೊಂಡಿಲ್ಲ", fill_required: "ದಯವಿಟ್ಟು ಅಗತ್ಯ ಫೀಲ್ಡನ್ನು ಭರ್ತಿ ಮಾಡಿ", upload_required: "ದಯವಿಟ್ಟು ಕನಿಷ್ಠ ಒಂದು ಚಿತ್ರವನ್ನು ಅಪ್‌ಲೋಡ್ ಮಾಡಿ", product_listed: "ಉತ್ಪನ್ನ ಪಟ್ಟಿ ಮಾಡಲಾಗಿದೆ", failed_add: "ಉತ್ಪನ್ನವನ್ನು ಸೇರಿಸಲು ವಿಫಲ — ಕನ್ಸೋಲ್ ನೋಡಿ", deleted: "ಅಳಿಸಲಾಗಿದೆ", delete_failed: "ಅಳಿಸುವುದು ವಿಫಲ", could_not_open: "ಎಡಿಟರ್ ತೆರೆಯಲಾಗಲಿಲ್ಲ", no_product_selected: "ಯಾವುದೇ ಉತ್ಪನ್ನ ಆಯ್ಕೆ ಆಗಿಲ್ಲ", updated: "ಉತ್ಪನ್ನ تازهಗೊಳ್ಳಾಲಾಗಿದೆಯ (updated)", update_failed: "ಅಪ್‌ಡೇಟ್ ವಿಫಲ", profile_updated: "ಪ್ರೊಫೈಲ್ تازهಗೊಳ್ಳಲಾಗಿದೆ", failed_save_profile: "ಪ್ರೊಫೈಲ್ ಉಳಿಸಲು ವಿಫಲ — ಕನ್ಸೋಲ್ ನೋಡಿ", signout_failed: "ಸೈನ್ ಔಟ್ ವಿಫಲ", enter_product_title: "ದಯವಿಟ್ಟು ಮೊದಲು ಉತ್ಪನ್ನ ಶೀರ್ಷಿಕೆಯನ್ನು ನಮೂದಿಸಿ!", openai_key_missing: "OpenAI ಕೀ ಇಲ್ಲ. AI ವೈಶಿಷ್ಟ್ಯಗಳನ್ನು ಬಳಸಲು ಫೈಲ್‌ನಲ್ಲಿ OPENAI_KEY ಅನ್ನು ಸೆಟ್ ಮಾಡಿ.", ai_unexpected_output: "AI ಅಪ್ರತ್ಯಾಶಿತ আউಟ್‌ಪುಟ್ ನೀಡಿದೆ. ಕನ್ಸೋಲ್ ಪರಿಶೀಲಿಸಿ." },
++    misc: { product_not_found: "ಉತ್ಪನ್ನ ಸಿಕ್ಕಿಲ್ಲ", coming_soon: "ಉತ್ಪನ್ನ ವಿವರ ಪುಟ ಶೀಘ್ರದಲ್ಲೇ ಬರುತ್ತದೆ!", added_to_cart_toast: "ಕಾರ್ಟ್‌ಗೆ ಸೇರಿಸಲಾಗಿದೆ!" }
++  },
++  te: {
++    nav: { home: "హోమ్", kalakriti: "కలాకృతి!", canvas: "క్యాన్వాస్", categories: "వర్గాలు", sell: "ఉత్పత్తులను అమ్మండి", shop: "షాప్", contact: "సంప్రదించండి" },
++    login: { login: "లాగిన్", logout: "లాగౌట్" },
++    hero: { title: "స్థానిక కళాకారులకు శక్తిని నింపటం", description: "సాంప్రదాయం మరియు ఆసక్తి కథలను చెప్తున్న ప్రత్యేక హస్తకళా వస్తువులను కనుగొనండి.", cta: "ఇప్పుడు షాపింగ్ చేయండి" },
++    kalakriti: { description: "కలాకృతిని కలవండి! — కళాకారులు మరియు వినియోగదారులకు సాయపడడానికి సిద్ధంగా ఉన్న మీ హృదయపూర్వక AI సహాయకుడు.", cta: "చాట్ చేయండి" },
++    canvas: { title: "క్యాన్వాస్", upload: "ఉత్పత్తి చిత్రం అప్లోడ్ చేయండి", promptLabel: "డిజైన్ ప్రాంప్ట్ నమోదు చేయండి", prompt: "మీ ఉత్పత్తిని మీరు ఎలా మెరుగు పరుస్తారని వర్ణించండి...", mode_local: "లోకల్ మెరుగుదల", mode_ai: "AI ఉత్పత్తి చేస్తున్నది", strength: "శక్తి", style_label: "శైలి", style_natural: "సహజమైన", style_artistic: "కళాత్మక", style_vintage: "వింటేజ్", generate: "సృష్టించు", download: "డౌన్లోడ్", processing: "జనరేట్ చేస్తున్నది...", idle: "నిష్క్రియ", sell: "ఈ ఉత్పత్తిని అమ్మండి" },
++    categories: { title: "మన కళాకారుల వర్గాలు", pottery: "మట్టి పాత్రలు", saree: "పరుగు సారీస్", toys: "హస్తనిర్మిత బొమ్మలు", explore: "కలెక్షన్ అన్వేషించండి" },
++    products: { featuredTitle: "ప్రఛలిత ఉత్పత్తులు", addToCart: "కార్ట్ లో జోడించండి" },
++    sell: { title: "మీ ఉత్పత్తులు అమ్మండి", name: "ఉత్పత్తి పేరు", category: "వర్గం", description: "వివరాలు", price: "ధర (₹)", images: "ఉత్పత్తి చిత్రాలు", list: "ఉత్పత్తి జాబితా చేయండి", saving: "స్థానికంగా సేవ్ చేస్తోంది... ఉత్పత్తి పేజీకి దారి తీస్తోంది." },
++    contact: { title: "సంప్రదించండి", name: "మీ పేరు", email: "మీ ఇమెయిల్", message: "మీ సందేశం", send: "సందేశాన్ని పంపండి" },
++    footer: { name: "స్వదేశి", tagline: "స్థానిక కళాకారులను వారి ప్రత్యేక హస్తకళా ఉత్పత్తులను ప్రదర్శించడానికి మరియు అమ్మడానికి శక్తివంతం చేయడం.", quickLinks: "త్వరిత లింకులు", categories: "వర్గాలు", contactInfo: "సంప్రదింపు సమాచారం" },
++    alerts: { added_to_cart: "కార్ట్‌కి జోడించబడింది!", upload_image: "దయచేసి ఒక చిత్రం అప్లోడ్ చేయండి!", fill_fields: "దయచేసి అన్ని ఫీల్డ్‌లు భరించండి (పేరు, వర్గం, వివరణ, ధర).", only_sellers: "కేవ‌లం విక్రేతలు మార్కెట్‌లో జాబితా చేయగలరు. స్థానికంగా సేవ్ చేస్తోంది మరియు ఉత్పత్తి పేజీకి దారితీస్తోంది." },
++    status: { saving_locally: "స్థానికంగా సేవ్ చేస్తోంది... ఉత్పత్తి పేజీకి దారితీస్తోంది.", listed_product: "ఉత్పత్తి జాబితా చేశారు! ఉత్పత్తి పేజీకి దారితీస్తోంది...", uploading: "చిత్రాలను అప్లోడ్ చేస్తోంది..." },
++    cart: { title: "మీ కార్ట్", empty_message: "మీ కార్ట్ ఖాళీగా ఉంది.", checkout: "చెక్ అవుట్" },
++    seller: { title: "విక్రేత డాష్ బోర్డు", overview: "సారాంశం", add: "ఉత్పత్తి జోడించండి", manage: "ఉత్పత్తులను నిర్వహించండి", orders: "ఆర్డర్లు", profile: "ప్రొఫైల్", sign_out: "సైన్ అవుట్", not_logged_in: "మీరు లాగిన్ కాలేదు. కొంత విక్రేత చర్యలు నిలిపివేయబడ్డాయి.", account_missing: "ఖాతా సమాచారం లేదు. దయచేసి హోమ్ పేజీ నుండి మళ్లీ సైన్ ఇన్ చేయండి.", auth_error: "ఆధారం/ప్రారంభ పొరపాటు — కన్సోల్ చూడండి.", not_authenticated: "ప్రామాణీకరించబడలేదు", fill_required: "దయచేసి అవసరమైన ఫీల్డ్‌లను పూర్తి చేయండి", upload_required: "దయచేసి కనీసం ఒక చిత్రం అప్లోడ్ చేయండి", product_listed: "ఉత్పత్తి జాబితా చేయబడింది", failed_add: "ఉత్పత్తి జోడించడంలో విఫలమైంది — కన్సోల్ చూడండి", deleted: "తొలగించబడింది", delete_failed: "తొలగింపు విఫలమైంది", could_not_open: "ఎడిటర్ తెరవలేకపోయాను", no_product_selected: "ఏ ఉత్పత్తి ఎంచుకోలేదు", updated: "ఉత్పత్తి నవీకరించబడింది", update_failed: "నవీకరణ విఫలమైంది", profile_updated: "ప్రొఫైల్ నవీకరించబడింది", failed_save_profile: "ప్రొఫైల్ సేవ్ విఫలమైంది — కన్సోల్ చూడండి", signout_failed: "సైన్ అవుట్ విఫలమైంది", enter_product_title: "దయచేసి ముందుగా ఉత్పత్తి టైటిల్ ను నమోదు చేయండి!", openai_key_missing: "OpenAI కీ లేరు. AI లక్షణాలను ఉపయోగించాలంటే ఫైల్‌లో OPENAI_KEY సెట్ చేయండి.", ai_unexpected_output: "AI అనూహ్య అవుట్పుట్‌ను తిరిగి ఇచ్చింది. కన్సోల్ చూడండి." },
++    misc: { product_not_found: "ఉత్పత్తి కనుగొనలేకపోయాం", coming_soon: "ఉత్పత్తి వివరాల పేజీ త్వరలో వచ్చేంది!", added_to_cart_toast: "కార్ట్‌లో జోడించబడింది!" }
++  },
++  ta: {
++    nav: { home: "முகப்பு", kalakriti: "கலாக்ரிதி!", canvas: "கேன்வாஸ்", categories: "வகைகள்", sell: "பொருட்களை விற்க", shop: "கடை", contact: "தொடர்பு கொள்ள" },
++    login: { login: "உள்நுழை", logout: "வெளியேறு" },
++    hero: { title: "உள்ளூர் கலைஞர்களுக்கு உரிமை அளித்தல்", description: "பாரம்பரியம் மற்றும் ஆர்வத்தின் கதைகள் கூறும் தனித்துவமான கைவினைப் பொருட்களை கண்டுபிடிக்கவும்.", cta: "இப்போது வாங்குங்கள்" },
++    kalakriti: { description: "கலாக்ரிதியை சந்தியுங்கள்! — கலைஞர்கள் மற்றும் வாடிக்கையாளர்களுக்கு உதவ தயாராக இருக்கும் உங்கள் நட்பு போலிய AI உதவியாளர்.", cta: "அரட்டை செய்ய" },
++    canvas: { title: "கேன்வாஸ்", upload: "தயாரிப்பு படத்தை பதிவேற்றவும்", promptLabel: "வடிவமைப்பு உடனடி (Prompt) உள்ளிடவும்", prompt: "உங்கள் தயாரிப்பை எவ்வாறு மேம்படுத்த விரும்புகிறீர்கள் என்பதை விவரிக்கவும்...", mode_local: "உள்ளக மேம்பாடு", mode_ai: "AI உருவாக்கம்", strength: "வலிமை", style_label: "நடை", style_natural: "இயல்பான", style_artistic: "கலைநயமான", style_vintage: "வின்டேஜ்", generate: "உருவாக்கவும்", download: "பதிவிறக்கவும்", processing: "உற்பத்தி செய்யப்படுகிறது...", idle: "சுமாராக உள்ளது", sell: "இந்த தயாரிப்பை விற்க" },
++    products: { featuredTitle: "அம்சமிக்க பொருட்கள்", addToCart: "கார்ட்டில் சேர்க்க" },
++    sell: { title: "உங்கள் தயாரிப்புகளை விற்க", name: "தயாரிப்பு பெயர்", category: "வகை", description: "விளக்கம்", price: "விலை (₹)", images: "தயாரிப்பு படங்கள்", list: "பொருளை பட்டியலிடு", saving: "உள்ளூரில் சேமித்து... தயாரிப்பு பக்கத்திற்கு வழிநடத்துகிறது." },
++    contact: { title: "தொடர்பு கொள்ள", name: "உங்கள் பெயர்", email: "உங்கள் மின்னஞ்சல்", message: "உங்கள் செய்தி", send: "செய்தி அனுப்பு" },
++    footer: { name: "ஸ்வதேசி", tagline: "உள்ளூர் கலைஞர்களை அவர்களது தனித்துவமான கைவினைப் பொருட்களை தயார் செய்து விற்க ஊக்குவிக்கிறது.", quickLinks: "விரைவு இணைப்புகள்", categories: "வகைகள்", contactInfo: "தொடர்பு தகவல்" },
++    alerts: { added_to_cart: "கார்ட்டில் சேர்க்கப்பட்டது!", upload_image: "ஒரு படத்தை பதிவேற்றவும்!", fill_fields: "தயவுசெய்து அனைத்து புலங்களையும் நிரப்பவும் (பெயர், வகை, விளக்கம், விலை).", only_sellers: "மார்கெட்டில் பட்டியலிடக்கூடியவர்கள் மட்டும் விற்பனையாளர்கள். உள்ளூரில் சேமிக்கப்படுகிறது மற்றும் தயாரிப்பு பக்கத்திற்கு வழிநடத்தப்படுகிறது." },
++    status: { saving_locally: "உள்ளூரில் சேமிக்கப்படுகிறது... தயாரிப்பு பக்கத்திற்கு வழிநடத்துகிறது.", listed_product: "பொருள் பட்டியலிடப்பட்டுள்ளது! தயாரிப்பு பக்கத்திற்கு வழிநடத்துகிறது...", uploading: "படங்களை பதிவேற்றி வருகிறது..." },
++    cart: { title: "உங்கள் கார்ட்", empty_message: "உங்கள் கார்ட் காலியாக உள்ளது.", checkout: "செக் அவுட்" },
++    seller: { title: "விற்பனையாளர் டாஷ்போர்ட்", overview: "மேலோட்டம்", add: "பொருளை சேர்க்க", manage: "பொருட்களை நிர்வகிக்க", orders: "ஆர்டர்கள்", profile: "ப்ரொஃபைல்", sign_out: "வெளியேறு", not_logged_in: "நீங்கள் உள்நுழையவில்லை. சில விற்பனையாளர் செயல்கள் முடக்கப்பட்டுள்ளன.", account_missing: "கணக்கு தகவல் இல்லை. தயவுசெய்து மீண்டும் ஹோம் பக்கத்திலிருந்து சைகின் செய்யவும்.", auth_error: "அங்கீகாரம்/துவக்கப் பிழை — கன்சோலைப் பாருங்கள்.", not_authenticated: "அங்கீகாரம் செய்யப்படவில்லை", fill_required: "தேவையான புலங்களை பூர்த்தி செய்யவும்", upload_required: "தயவுசெய்து குறைந்தபட்சம் ஒரு படம் பதிவேற்றவும்", product_listed: "பொருள் பட்டியலிடப்பட்டது", failed_add: "பொருளை சேர்க்க முடியவில்லை — கன்சோலைப் பாருங்கள்", deleted: "அழிக்கப்பட்டது", delete_failed: "அழிப்பு தோல்வி", could_not_open: "தொகுப்பியைத் திறக்க முடியவில்லை", no_product_selected: "எந்த பொருளும் தேர்ந்தெடுக்கப்படவில்லை", updated: "பொருள் புதுப்பிக்கப்பட்டது", update_failed: "புதுப்பிப்பு தோல்வி", profile_updated: "ப்ரொஃபைல் புதுப்பிக்கப்பட்டது", failed_save_profile: "ப்ரொஃபைலை சேமிக்க முடியவில்லை — கன்சோலைப் பாருங்கள்", signout_failed: "வெளியேறு தோல்வி", enter_product_title: "முதலில் பொருள் தலைப்பை உள்ளிடவும்!", openai_key_missing: "OpenAI விசை இல்லை. AI அம்சங்களை பயன்படுத்த கோப்பில் OPENAI_KEY ஐ அமைக்கவும்.", ai_unexpected_output: "AI எதிர்பாராத வெளியீட்டை வழங்கியது. கன்சோலைப் பாருங்கள்." },
++    misc: { product_not_found: "பொருள் காணப்படவில்லை", coming_soon: "பொருள் விவரப் பக்கம் விரைவில் வர இருக்கிறது!", added_to_cart_toast: "கார்ட்டில் சேர்க்கப்பட்டது!" }
++  }
++};
+-- 
+2.48.1.windows.1
+

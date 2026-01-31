@@ -5,8 +5,9 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/fireba
 import { getFirestore, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 // Firebase config
+// Do NOT check API keys into source. Set `window.FIREBASE_API_KEY` at runtime or replace during build.
 const firebaseConfig = {
-  apiKey: "AIzaSyAs8Ee4DFiPXq3o8UgCgrLFKmLECmxiuyc",
+  apiKey: window.FIREBASE_API_KEY || "REDACTED",
   authDomain: "swadeshi-b73c1.firebaseapp.com",
   projectId: "swadeshi-b73c1",
   storageBucket: "swadeshi-b73c1.appspot.com",

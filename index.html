@@ -140,24 +140,102 @@
 <!-- KEEP YOUR FULL CONTENT FROM YOUR FILE HERE -->
 <!-- Kalakriti! Section --> <section id="kalakriti" class="py-20 bg-[var(--light-color)]"> 
     <div class="container mx-auto px-6 max-w-7xl"> <h2 class="text-4xl font-bold text-center mb-12 text-[var(--primary-color)] section-title mx-auto">Kalakriti! <span class="text-[var(--accent-color)]">AI Chatbot</span></h2> <div class="max-w-xl mx-auto bg-white rounded-3xl p-12 shadow-lg flex \
-        flex-col items-center space-y-8"> <div id="chatbot" class="w-48 h-48 bg-[var(--primary-color)] rounded-full flex items-center justify-center shadow-lg select-none animate-bounce" aria-label="Animated chatbot icon" role="img" tabindex="0"> <i class="fas fa-robot fa-6x text-white"></i> </div> <p class="text-[var(--dark-color)] text-center text-lg max-w-md" data-i18n="kalakriti.description"> Meet <strong>Kalakriti!</strong> — your friendly AI assistant ready to help artisans and customers alike. Ask questions about products, selling, shipping, and more. </p> <button id="open-chatbot-btn" class="btn-primary px-8 py-3 rounded-full font-semibold hover:shadow-lg transition" aria-label="Open Kalakriti chatbot"> <a href ="kalakritib.html" data-i18n="kalakriti.cta">Chat now</a> </button> </div> </div> </section> <!-- Canvas Section --> <section id="canvas" class="py-20 bg-white"> <div class="container mx-auto px-6 max-w-7xl"> <h2 class="text-4xl font-bold text-center mb-12 text-[var(--primary-color)] section-title mx-auto">Canvas <span class="text-[var(--accent-color)]">AI-Powered Design Tool</span></h2> <form id="canvas-form" class="max-w-3xl mx-auto flex flex-col space-y-6 border border-[var(--primary-color)] rounded-xl p-8" aria-label="Canvas AI design tool form"> <label class="flex flex-col space-y-2 text-[var(--dark-color)] font-semibold" data-i18n="canvas.upload">
-  Upload Product Image
-  <div id="product-dropzone" class="mt-2 border-2 border-dashed border-gray-300 rounded-md p-6 text-center cursor-pointer" aria-label="Drag and drop image here or click choose file">
-    <p id="dropzone-text" class="text-sm text-gray-600">Drag & drop an image here, or</p>
-    <div class="mt-3 flex justify-center gap-3">
-      <button type="button" id="choose-file-btn" class="btn-outline px-4 py-2 rounded">Choose file</button>
-      <button type="button" id="paste-image-btn" class="btn-outline px-4 py-2 rounded">Paste image / URL</button>
-    </div>
+        flex-col items-center space-y-8"> <div id="chatbot" class="w-48 h-48 bg-[var(--primary-color)] rounded-full flex items-center justify-center shadow-lg select-none animate-bounce" aria-label="Animated chatbot icon" role="img" tabindex="0"> <i class="fas fa-robot fa-6x text-white"></i> </div> <p class="text-[var(--dark-color)] text-center text-lg max-w-md" data-i18n="kalakriti.description"> Meet <strong>Kalakriti!</strong> — your friendly AI assistant ready to help artisans and customers alike. Ask questions about products, selling, shipping, and more. </p> <button id="open-chatbot-btn" class="btn-primary px-8 py-3 rounded-full font-semibold hover:shadow-lg transition" aria-label="Open Kalakriti chatbot"> <a href ="kalakritib.html" data-i18n="kalakriti.cta">Chat now</a> </button> </div> </div> </section> <!-- Canvas Section --> <section id="canvas" class="py-20 bg-white"> <div class="container mx-auto px-6 max-w-7xl"> <h2 class="text-4xl font-bold text-center mb-12 text-[var(--primary-color)] section-title mx-auto">Canvas <span class="text-[var(--accent-color)]">AI-Powered Design Tool</span></h2> <form id="canvas-form"
+  class="max-w-3xl mx-auto flex flex-col space-y-6 border border-[var(--primary-color)] rounded-xl p-8"
+  aria-label="Canvas AI design tool form">
 
-    <input type="file" id="product-image" accept="image/*" required class="hidden" aria-label="Upload product image" />
+  <!-- Upload Product Image (FIXED) -->
+  <div class="flex flex-col space-y-2 text-[var(--dark-color)] font-semibold">
+    <span data-i18n="canvas.upload">Upload Product Image</span>
 
-    <div id="image-preview" class="mt-4 hidden">
-      <img id="preview-img" src="#" alt="Selected image preview" class="mx-auto rounded-md shadow-sm max-h-48" />
-      <div class="mt-2 text-sm text-gray-600" id="preview-name"></div>
-      <button type="button" id="remove-preview" class="btn-outline mt-2 px-4 py-1 rounded">Remove</button>
+    <div id="product-dropzone"
+      class="mt-2 border-2 border-dashed border-gray-300 rounded-md p-6 text-center cursor-pointer"
+      aria-label="Drag and drop image here or click choose file">
+
+      <p id="dropzone-text" class="text-sm text-gray-600">
+        Drag & drop an image here, or
+      </p>
+
+      <div class="mt-3 flex justify-center gap-3">
+        <button type="button" id="choose-file-btn"
+          class="btn-outline px-4 py-2 rounded">
+          Choose file
+        </button>
+        <button type="button" id="paste-image-btn"
+          class="btn-outline px-4 py-2 rounded">
+          Paste image / URL
+        </button>
+      </div>
+
+      <input type="file" id="product-image"
+        accept="image/*" class="hidden" />
+
+      <div id="image-preview" class="mt-4 hidden">
+        <img id="preview-img" class="mx-auto rounded-md shadow-sm max-h-48" />
+        <div id="preview-name" class="mt-2 text-sm text-gray-600"></div>
+        <button type="button" id="remove-preview"
+          class="btn-outline mt-2 px-4 py-1 rounded">
+          Remove
+        </button>
+      </div>
     </div>
   </div>
-</label> <label class="flex flex-col space-y-2 text-[var(--dark-color)] font-semibold" data-i18n="canvas.promptLabel"> Enter Design Prompt <input type="text" id="design-prompt" data-i18n-placeholder="canvas.prompt" class="border border-gray-300 rounded-md p-3" aria-label="Design prompt" /> </label> <div class="flex items-center gap-6"> <label class="flex items-center gap-2"><input type="radio" name="canvas-mode" value="local" checked> <span data-i18n="canvas.mode_local">Local Enhance</span></label> <label class="flex items-center gap-2"><input type="radio" name="canvas-mode" value="ai"> <span data-i18n="canvas.mode_ai">AI Generate</span></label> </div> <label class="flex items-center gap-3" title="Strength"> <span data-i18n="canvas.strength">Strength</span> <input type="range" id="canvas-strength" min="0" max="100" value="50" class="w-full" /> </label> <label class="flex items-center gap-2"> <span data-i18n="canvas.style_label">Style</span> <select id="canvas-style" class="border border-gray-300 rounded-md p-2"> <option value="natural" data-i18n="canvas.style_natural">Natural</option> <option value="artistic" data-i18n="canvas.style_artistic">Artistic</option> <option value="vintage" data-i18n="canvas.style_vintage">Vintage</option> </select> </label> <div class="flex gap-3"> <button type="button" id="generate-canvas" class="btn-primary px-8 py-3 rounded-full font-semibold hover:shadow-lg transition" aria-label="Generate enhanced visual"> <span data-i18n="canvas.generate">Generate</span> </button> <button type="button" id="download-canvas" class="btn-outline px-6 py-2 rounded hidden" data-i18n="canvas.download">Download</button> </div> <div id="canvas-status" class="text-sm text-gray-600 mt-2" data-i18n="canvas.idle">Idle</div> </form>
+
+  <!-- Design Prompt (WORKS NOW) -->
+  <label class="flex flex-col space-y-2 font-semibold">
+    <span data-i18n="canvas.promptLabel">Enter Design Prompt</span>
+    <input type="text" id="design-prompt"
+      class="border border-gray-300 rounded-md p-3"
+      placeholder="e.g. Make it brighter and more festive" />
+  </label>
+
+  <!-- Mode -->
+  <div class="flex items-center gap-6">
+    <label class="flex items-center gap-2">
+      <input type="radio" name="canvas-mode" value="local" checked />
+      <span>Local Enhance</span>
+    </label>
+    <label class="flex items-center gap-2">
+      <input type="radio" name="canvas-mode" value="ai" />
+      <span>AI Generate</span>
+    </label>
+  </div>
+
+  <!-- Strength -->
+  <label class="flex flex-col gap-2">
+    <span>Strength</span>
+    <input type="range" id="canvas-strength"
+      min="0" max="100" value="50" />
+  </label>
+
+  <!-- Style -->
+  <label class="flex flex-col gap-2">
+    <span>Style</span>
+    <select id="canvas-style"
+      class="border border-gray-300 rounded-md p-2">
+      <option value="natural">Natural</option>
+      <option value="artistic">Artistic</option>
+      <option value="vintage">Vintage</option>
+    </select>
+  </label>
+
+  <!-- Buttons -->
+  <div class="flex gap-3">
+    <button type="button" id="generate-canvas"
+      class="btn-primary px-8 py-3 rounded-full font-semibold">
+      Generate
+    </button>
+
+    <button type="button" id="download-canvas"
+      class="btn-outline px-6 py-2 rounded hidden">
+      Download
+    </button>
+  </div>
+
+  <div id="canvas-status" class="text-sm text-gray-600">
+    Idle
+  </div>
+</form>
 
 <!-- Paste Image / URL Modal -->
 <div id="paste-image-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50" role="dialog" aria-modal="true" aria-labelledby="paste-modal-title">
@@ -223,8 +301,9 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
+// Do NOT check API keys into source. Set `window.FIREBASE_API_KEY` at runtime or replace during build.
 const firebaseConfig = {
-  apiKey: "AIzaSyAs8Ee4DFiPXq3o8UgCgrLFKmLECmxiuyc",
+  apiKey: window.FIREBASE_API_KEY || "REDACTED",
   authDomain: "swadeshi-b73c1.firebaseapp.com",
   projectId: "swadeshi-b73c1",
   storageBucket: "swadeshi-b73c1.appspot.com",

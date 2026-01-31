@@ -8,8 +8,9 @@ import { getStorage, ref as storageRef, uploadBytes, getDownloadURL } from "http
 console.log("MAIN JS LOADED ✔");
 
 // FIREBASE CONFIG
+// Do NOT check API keys into source. Set `window.FIREBASE_API_KEY` at runtime or replace during build.
 const firebaseConfig = {
-  apiKey: "AIzaSyAs8Ee4DFiPXq3o8UgCgrLFKmLECmxiuyc",
+  apiKey: window.FIREBASE_API_KEY || "REDACTED",
   authDomain: "swadeshi-b73c1.web.app",
   projectId: "swadeshi-b73c1",
   storageBucket: "swadeshi-b73c1.appspot.com",

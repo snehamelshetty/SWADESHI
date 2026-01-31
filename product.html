@@ -147,14 +147,15 @@
       const { initializeApp } = await import("https://www.gstatic.com/firebasejs/9.24.0/firebase-app.js");
       const { getFirestore, collection, query, getDocs, orderBy } = await import("https://www.gstatic.com/firebasejs/9.24.0/firebase-firestore.js");
 
+      // Do NOT check API keys into source. Set `window.FIREBASE_API_KEY` at runtime or replace during build.
       const firebaseConfig = {
-        apiKey: "AIzaSyAs8Ee4DFiPXq3o8UgCgrLFKmLECmxiuyc",
+        apiKey: window.FIREBASE_API_KEY || "REDACTED",
         authDomain: "swadeshi-b73c1.web.app",
         projectId: "swadeshi-b73c1",
         storageBucket: "swadeshi-b73c1.appspot.com",
         messagingSenderId: "976631330768",
         appId: "1:976631330768:web:addc77ae3062dee1a9abd5"
-      };
+      }; 
 
       const app = initializeApp(firebaseConfig);
       const db = getFirestore(app);
