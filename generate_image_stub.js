@@ -3,37 +3,42 @@
 // This stub simply echoes back the uploaded image (simulate AI response).
 // Replace with a proxy to real image-generation API (OpenAI/Replicate/StableDiffusion) on server-side.
 
-import express from 'express';
-import multer from 'multer';
-import fs from 'fs';
-import path from 'path';
+import OpenAI from "openai";
+import fs from "fs";
+import multer from "multer";
+import express from "express";
 
-const upload = multer({ dest: 'uploads/' });
-const app = express();
-const PORT = process.env.PORT || 3000;
-
-app.post('/api/generate-image', upload.single('image'), async (req, res) => {
-  try {
-    // Debug: log prompt and body fields to verify prompt arrives
-    console.log('generate-image request body:', req.body);
-    console.log('generate-image received prompt:', req.body && req.body.prompt);
-
-    // For now, just return the uploaded file to simulate processing.
-    if (!req.file) return res.status(400).send('No image');
-    const filePath = req.file.path;
-    // Optionally: perform server-side enhancements here, call remote API, etc.
-
-    // Send file back as image/png (or original mimetype)
-    res.setHeader('Content-Type', req.file.mimetype || 'image/jpeg');
-    const stream = fs.createReadStream(filePath);
-    stream.pipe(res);
-
-    // cleanup after response
-    stream.on('close', ()=> fs.unlink(filePath, ()=>{}));
-  } catch (err) {
-    console.error(err);
-    res.status(500).send('Server error');
-  }
+const openai = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY
 });
 
-app.listen(PORT, ()=> console.log(`Image generation stub listening on http://localhost:${PORT}`));
+const upload = multer({ dest: "uploads/" });
+const app = express();
+
+app.post("/api/generate-image", upload.single("image"), async (req, res) => {
+  try {
+    const prompt = req.body.prompt;
+
+    if (!req.file || !prompt) {
+      return res.status(400).send("Image and prompt required");
+    }
+
+    const response = await openai.images.edits({
+      model: "gpt-image-1",
+      image: fs.createReadStream(req.file.path),
+      prompt: prompt,
+      size: "1024x1024"
+    });
+
+    const imageBase64 = response.data[0].b64_json;
+    const imageBuffer = Buffer.from(imageBase64, "base64");
+
+    res.setHeader("Content-Type", "image/png");
+    res.send(imageBuffer);
+
+    fs.unlink(req.file.path, () => {});
+  } catch (error) {
+    console.error(error);
+    res.status(500).send("AI image generation failed");
+  }
+});
