@@ -9,13 +9,18 @@
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&family=Playfair+Display:wght@400;600&display=swap" rel="stylesheet">
 
   <style>
-    :root{
-      --primary:#8b5a2b; --accent:#d4af37; --light:#f8f3e9; --dark:#3c2f28;
+    :root {
+      --primary: #8b5a2b;
+      --accent: #d4af37;
+      --light: #f8f3e9;
+      --dark: #3c2f28;
     }
-    body { font-family: 'Poppins', sans-serif; background:var(--light); color:var(--dark); }
+    body { font-family: 'Poppins', sans-serif; background: var(--light); color: var(--dark); }
     h1,h2,h3 { font-family:'Playfair Display', serif; }
-    .btn-primary { background:var(--primary); color:white; }
-    .btn-outline { border:2px solid var(--primary); color:var(--primary); }
+    .btn-primary { background: var(--primary); color: white; }
+    .btn-outline { border: 2px solid var(--primary); color: var(--primary); }
+    .category-chip:hover { transform: scale(1.05); transition: 0.2s; cursor: pointer; }
+    .product-card:hover { transform: translateY(-3px); transition: 0.2s; }
   </style>
 </head>
 <body class="min-h-screen">
@@ -23,63 +28,108 @@
   <!-- NAV -->
   <nav class="fixed top-0 left-0 right-0 bg-white shadow px-6 py-4 z-40">
     <div class="max-w-6xl mx-auto flex items-center justify-between">
-      <a class="text-2xl font-bold text-[var(--primary)]"><span class="text-[var(--accent)]">SWAD</span>ESHI</a>
+      <a class="text-2xl font-bold text-[var(--primary)]" data-i18n="footer.name"><span class="text-[var(--accent)]">SWAD</span>ESHI</a>
       <div class="flex items-center gap-4">
-        <a href="index.html" class="text-sm">Home</a>
-        <a href="#shop" class="text-sm">Shop</a>
-        <a id="cart-link" href="cart.html" class="text-sm">Cart (<span id="cart-count">0</span>)</a>
-        <button id="auth-btn" class="btn-primary px-4 py-1 rounded-full">Login</button>
+        <a href="index.html" class="text-sm" data-i18n="nav.home">Home</a>
+        <a href="#shop" class="text-sm" data-i18n="nav.shop">Shop</a>
+        <a href="cart.html" class="text-sm"><span data-i18n="cart.title">Cart</span> (<span id="cart-count">0</span>)</a>
+        <button id="auth-btn" class="btn-primary px-4 py-1 rounded-full" data-i18n="login.login">Login</button>
       </div>
     </div>
   </nav>
 
   <!-- HERO -->
-  <section class="pt-24 pb-10">
-    <div class="max-w-6xl mx-auto px-6 grid md:grid-cols-2 gap-6 items-center">
-      <div>
-        <h1 class="text-5xl font-bold text-[var(--primary)]">Handmade for home — crafted by local artisans</h1>
-        <p class="mt-4 text-lg text-gray-700 max-w-xl">Discover unique, sustainable pieces — pottery, sarees, toys and more. Shop directly from makers.</p>
-        <div class="mt-6 flex gap-3">
-          <a href="#shop" class="btn-primary px-6 py-3 rounded-full">Shop Now</a>
-          <a href="seller-dashboard.html" class="btn-outline px-6 py-3 rounded-full">Sell on Swadeshi</a>
-        </div>
-      </div>
-      <div class="hidden md:block">
-        <img src="https://images.unsplash.com/photo-1589100029763-602428cb5c59?auto=format&fit=crop&w=900&q=60" class="rounded-lg shadow" alt="hero">
+<section class="pt-24 pb-10 bg-[var(--light)]">
+  <div class="max-w-6xl mx-auto px-6 grid md:grid-cols-2 gap-6 items-center">
+    <div>
+      <h1 class="text-5xl font-bold text-[var(--primary)]">
+        Handmade for Home — Crafted by Local Artisans
+      </h1>
+      <p class="mt-4 text-lg text-gray-700 max-w-xl">
+        Discover unique, sustainable pieces — pottery, sarees, toys and more. Shop directly from makers.
+      </p>
+      <div class="mt-6 flex gap-3">
+        <a href="#shop" class="btn-primary px-6 py-3 rounded-full">Shop Now</a>
       </div>
     </div>
-  </section>
+    <div class="hidden md:block">
+      <img src="https://www.thegoodloop.com/wp-content/uploads/2022/01/akhil-pawar-XCd_6nOdzjo-unsplash-1160x754.jpeg" class="rounded-lg shadow" alt="Artisan Crafts">
+    </div>
+  </div>
+</section>
 
-  <!-- CATEGORIES -->
-  <section id="categories" class="py-8">
-    <div class="max-w-6xl mx-auto px-6">
-      <h2 class="text-3xl font-semibold text-[var(--primary)] mb-4">Categories</h2>
-      <div class="grid grid-cols-2 md:grid-cols-6 gap-4">
-        <button class="category-chip p-3 rounded-lg bg-white shadow text-sm">Pottery</button>
-        <button class="category-chip p-3 rounded-lg bg-white shadow text-sm">Sarees</button>
-        <button class="category-chip p-3 rounded-lg bg-white shadow text-sm">Toys</button>
-        <button class="category-chip p-3 rounded-lg bg-white shadow text-sm">Handicrafts</button>
-        <button class="category-chip p-3 rounded-lg bg-white shadow text-sm">Home Decor</button>
-        <button class="category-chip p-3 rounded-lg bg-white shadow text-sm">Fashion</button>
-      </div>
-    </div>
-  </section>
+
+  
 
   <!-- PRODUCTS GRID -->
   <section id="shop" class="py-6">
     <div class="max-w-6xl mx-auto px-6">
       <div class="flex items-center justify-between mb-4">
-        <h2 class="text-3xl font-semibold text-[var(--primary)]">Featured Products</h2>
+        <h2 class="text-3xl font-semibold text-[var(--primary)]">Shop</h2>
         <input id="search" placeholder="Search products..." class="border p-2 rounded w-64" />
       </div>
 
       <div id="products-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-        <!-- products injected here -->
+        <!-- Products injected here -->
       </div>
     </div>
   </section>
+  <main class="pt-20 max-w-6xl mx-auto px-4">
+    <div id="product-wrap" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+      <!-- Products will load here -->
+    </div>
+  </main>
+<script>
+  const wrap = document.getElementById('product-wrap');
 
-  <!-- Floating chatbot -->
+  // 15 dummy products
+  const products = [
+    { id:1, name: "Handmade Wooden Bowl", description: "A beautiful handcrafted wooden bowl.", price: 499, stock: 12, sellerId: "s1", images:["https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSrgeVlmrFrUa7Auth_L-kth6gIsCX4K9lwMg&s"] },
+    { id:2, name: "Organic Cotton Bag", description: "Eco-friendly organic cotton bag.", price: 299, stock: 20, sellerId: "s2", images:["https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSrhS2bfJ2xnVouMsEMS5SVvKlWvYBaIcGdwg&s"] },
+    { id:3, name: "Handwoven Scarf", description: "Warm handwoven scarf.", price: 799, stock: 5, sellerId: "s3", images:["https://shop.gaatha.com/image/catalog/Vankar-Babubhai-Ladhubhai/20_03_2023/06-(7).jpg"] },
+    { id:4, name: "Ceramic Vase", description: "Elegant ceramic vase for home decor.", price: 1200, stock: 7, sellerId: "s4", images:["https://www.jiomart.com/images/product/original/rvmxslavhh/artysta-madhubani-series-1-pottery-vase-6-9-inch-black-product-images-orvmxslavhh-p595937294-0-202212012052.jpg?im=Resize=(420,420)"] },
+ { id:5, name: "Madhubani Painting", description: "Authentic hand-painted Madhubani art from Bihar.", price: 2500, stock: 7, sellerId: "s3", images:["https://cdn.shopify.com/s/files/1/0582/4007/3878/files/ram-wedding.jpg?v=1635757117"] },
+ { id:11, name: "Pashmina Stole", description: "Soft Pashmina stole handwoven in Kashmir.", price: 3500, stock: 10, sellerId: "s11", images:["https://img500.exportersindia.com/product_images/bc-500/dir_106/3158314/pashmina-shawls-1492152238-2808401.jpeg"] },
+  { id:12, name: "Dhokra Tribal Art Figurine", description: "Unique brass figurine made with Dhokra metal casting technique.", price: 2000, stock: 6, sellerId: "s12", images:["https://storeassets.im-cdn.com/media-manager/realcraftsdotin/ktyz3zgjRNSpW4WR7cAf_three-dhokra-musicians-realcrafts_0x0_webp.jpg"] },
+  { id:13, name: "Kalamkari Wall Hanging", description: "Traditional hand-painted Kalamkari textile from Andhra Pradesh.", price: 2200, stock: 8, sellerId: "s13", images:["https://www.gangesindia.com/cdn/shop/products/45d6526c39f068b704ebaad0619a888e_1024x.jpg?v=1571611560"] },
+];
+
+  function loadProducts(){
+    wrap.innerHTML = products.map(p => `
+      <div class="bg-white rounded-lg p-3 shadow">
+        <img src="${p.images[0]}" class="w-full h-48 object-cover rounded" />
+        <h2 class="text-lg font-bold text-[var(--primary)] mt-2">${p.name}</h2>
+        <p class="text-gray-600 text-sm mt-1">${p.description}</p>
+        <div class="mt-1">
+          <div class="text-md font-bold text-[var(--primary)]">₹${p.price}</div>
+          <div class="text-xs text-gray-500">Stock: ${p.stock}</div>
+        </div>
+        <div class="mt-2 flex gap-2">
+          <button class="addToCart bg-[var(--primary)] text-white px-3 py-1 rounded text-sm" data-id="${p.id}" data-i18n="products.addToCart">Add to Cart</button>
+        </div>
+      </div>
+    `).join('');
+
+    // Add to cart functionality
+    wrap.querySelectorAll('.addToCart').forEach(btn => {
+      btn.addEventListener('click', e=>{
+        const id = parseInt(e.currentTarget.dataset.id);
+        const p = products.find(x=>x.id===id);
+        const cart = JSON.parse(localStorage.getItem('swadeshi_cart')||'[]');
+        const existing = cart.find(x=>x.id===id);
+        if(existing) existing.qty += 1;
+        else cart.push({ id, name:p.name, price:p.price, qty:1, sellerId:p.sellerId, img: p.images[0] });
+        localStorage.setItem('swadeshi_cart', JSON.stringify(cart));
+        alert(i18n.t('alerts.added_to_cart'));
+      });
+    });
+  }
+
+  loadProducts();
+  if (window.i18n && window.i18n.applyTranslations) window.i18n.applyTranslations();
+</script>
+
+  <!-- CHATBOT -->
   <div id="chatbotBtn" class="fixed bottom-6 right-6 bg-[var(--primary)] text-white p-4 rounded-full shadow cursor-pointer z-40">
     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a8 8 0 0 1 8 8v3a4 4 0 0 1-4 4h-1v3l-4-3h-1a4 4 0 0 1-4-4V10a8 8 0 0 1 8-8z"/></svg>
   </div>
@@ -88,11 +138,13 @@
       <h4 class="text-[var(--primary)] font-semibold">Kalakriti AI</h4>
       <button id="closeChat" class="text-gray-500">✕</button>
     </div>
-    <iframe src="kalakritib.html" class="w-full h-64 rounded"></iframe>
+    <iframe src="Kalakritib.html" class="w-full h-64 rounded"></iframe>
   </div>
 
+<script src="translations.js"></script>
+<script src="i18n.js"></script>
+
 <script type="module">
-  // Firebase imports
   import { initializeApp } from "https://www.gstatic.com/firebasejs/9.24.0/firebase-app.js";
   import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/9.24.0/firebase-auth.js";
   import { getFirestore, collection, query, orderBy, getDocs, doc, getDoc } from "https://www.gstatic.com/firebasejs/9.24.0/firebase-firestore.js";
@@ -105,50 +157,52 @@
     messagingSenderId: "976631330768",
     appId: "1:976631330768:web:addc77ae3062dee1a9abd5"
   };
+
   const app = initializeApp(firebaseConfig);
   const auth = getAuth(app);
   const db = getFirestore(app);
 
-  // UI refs
   const authBtn = document.getElementById('auth-btn');
   const cartCountEl = document.getElementById('cart-count');
   const productsGrid = document.getElementById('products-grid');
   const searchInput = document.getElementById('search');
 
-  // CART helpers (localStorage)
   const CART_KEY = 'swadeshi_cart';
+
   function getCart(){ try { return JSON.parse(localStorage.getItem(CART_KEY)) || []; } catch { return []; } }
   function saveCart(c){ localStorage.setItem(CART_KEY, JSON.stringify(c)); updateCartCount(); }
-  function updateCartCount(){ const c = getCart(); const qty = c.reduce((s,i)=>s+i.qty,0); cartCountEl.textContent = qty; }
+  function updateCartCount(){ 
+    const qty = getCart().reduce((s,i)=>s+i.qty,0); 
+    if(cartCountEl) cartCountEl.textContent = qty; 
+  }
 
-  // AUTH UI
   onAuthStateChanged(auth, user => {
     if(!user){
       authBtn.textContent = 'Login';
-      authBtn.onclick = ()=> window.location.href='login.html';
+      authBtn.onclick = () => window.location.href='login.html';
     } else {
       authBtn.textContent = 'Logout';
-      authBtn.onclick = async ()=> { await signOut(auth); location.reload(); };
+      authBtn.onclick = async () => { await signOut(auth); location.reload(); };
     }
   });
 
-  // Load products from Firestore
-  async function loadProducts(){
+  // Load products dynamically
+  async function loadProducts() {
     productsGrid.innerHTML = `<p class="col-span-3 text-center text-gray-500">Loading...</p>`;
     try {
       const q = query(collection(db,'products'), orderBy('createdAt','desc'));
       const snap = await getDocs(q);
       productsGrid.innerHTML = '';
-      snap.forEach(d=>{
+      snap.forEach(d => {
         const p = d.data();
         const id = d.id;
         const img = (p.images && p.images.length) ? p.images[0] : 'https://via.placeholder.com/400?text=No+Image';
         const card = document.createElement('div');
-        card.className = 'bg-white rounded-xl shadow p-4';
+        card.className = 'bg-white rounded-xl shadow p-4 product-card';
         card.innerHTML = `
           <img src="${img}" alt="${p.name}" class="h-44 w-full object-cover rounded mb-3">
-          <h3 class="font-semibold text-lg">${escapeHtml(p.name)}</h3>
-          <p class="text-gray-600 mt-1">${escapeHtml((p.description||'').slice(0,80))}${(p.description||'').length>80?'...':''}</p>
+          <h3 class="font-semibold text-lg">${p.name}</h3>
+          <p class="text-gray-600 mt-1">${(p.description||'').slice(0,80)}...</p>
           <div class="mt-3 flex items-center justify-between">
             <div class="font-bold text-[var(--primary)]">₹${p.price||0}</div>
             <div class="flex gap-2">
@@ -160,112 +214,79 @@
         productsGrid.appendChild(card);
       });
 
-      // attach handlers
-      document.querySelectorAll('.viewBtn').forEach(b=>b.addEventListener('click', e=>{
-        const id = e.currentTarget.dataset.id;
-        window.location.href = `product.html?id=${id}`;
-      }));
+      document.querySelectorAll('.addBtn').forEach(b => {
+        b.addEventListener('click', async e => {
+          const id = e.currentTarget.dataset.id;
+          const docSnap = await getDoc(doc(db,'products', id));
+          if(!docSnap.exists()) return alert(i18n.t('misc.product_not_found'));
+          const p = docSnap.data();
+          const cart = getCart();
+          const existing = cart.find(i=>i.id===id);
+          if(existing) existing.qty++;
+          else cart.push({ id, name:p.name, price:p.price, sellerId:p.sellerId, qty:1, img:(p.images&&p.images[0])||'' });
+          saveCart(cart);
+          toast(i18n.t('misc.added_to_cart_toast'));
+          updateCartCount();
+        });
+      });
 
-      document.querySelectorAll('.addBtn').forEach(b=>b.addEventListener('click', async (e)=>{
-        const id = e.currentTarget.dataset.id;
-        await addToCartById(id);
-      }));
+      document.querySelectorAll('.viewBtn').forEach(b => {
+        b.addEventListener('click', e => alert(i18n.t('misc.coming_soon')));
 
     } catch(err){
-      console.error('Load products error', err);
+      console.error(err);
       productsGrid.innerHTML = `<p class="col-span-3 text-center text-red-600">Failed to load products.</p>`;
     }
   }
 
-  // add product by id to cart (fetch from Firestore directly)
-  async function addToCartById(id){
-    try{
-      const docSnap = await getDoc(doc(db,'products', id));
-      if(!docSnap.exists()){ alert('Product not found'); return; }
-      const p = docSnap.data();
-      const cart = getCart();
-      const existing = cart.find(i=>i.id===id);
-      if(existing){ existing.qty += 1; } else { cart.push({ id, name:p.name, price:p.price, sellerId:p.sellerId, qty:1, img: (p.images&&p.images[0])||'' }); }
-      saveCart(cart);
-      toast('Added to cart');
-    }catch(err){
-      console.error(err);
-      alert('Could not add to cart');
-    }
-  }
-
-  // small toast
-  function toast(msg){
-    const t = document.createElement('div');
-    t.textContent = msg;
-    t.className = 'fixed bottom-20 right-6 bg-[var(--dark)] text-white px-4 py-2 rounded shadow z-50';
-    document.body.appendChild(t);
-    setTimeout(()=> t.remove(),2000);
-  }
-
-  // search filter
-  searchInput.addEventListener('input', ()=>{
+  // Search filter
+  searchInput.addEventListener('input', () => {
     const q = searchInput.value.trim().toLowerCase();
-    Array.from(productsGrid.children).forEach(card=>{
+    Array.from(productsGrid.children).forEach(card => {
       const title = card.querySelector('h3').textContent.toLowerCase();
       const desc = card.querySelector('p').textContent.toLowerCase();
       card.style.display = (title.includes(q) || desc.includes(q)) ? '' : 'none';
     });
   });
 
-  // category chips (basic)
-  document.querySelectorAll('.category-chip').forEach(btn=>{
-    btn.addEventListener('click', async ()=>{
-      const cat = btn.textContent.trim();
-      productsGrid.innerHTML = `<p class="text-center col-span-3">Loading ${cat}...</p>`;
-      try{
-        const q = query(collection(db,'products'), orderBy('createdAt','desc'));
-        const snap = await getDocs(q);
-        productsGrid.innerHTML = '';
-        snap.forEach(d=>{
-          const p = d.data();
-          if(p.category && p.category.toLowerCase()===cat.toLowerCase()){
-            const id = d.id;
-            const img = (p.images && p.images.length) ? p.images[0] : 'https://via.placeholder.com/400?text=No+Image';
-            const card = document.createElement('div');
-            card.className = 'bg-white rounded-xl shadow p-4';
-            card.innerHTML = `
-              <img src="${img}" alt="${p.name}" class="h-44 w-full object-cover rounded mb-3">
-              <h3 class="font-semibold text-lg">${escapeHtml(p.name)}</h3>
-              <p class="text-gray-600 mt-1">${escapeHtml((p.description||'').slice(0,80))}${(p.description||'').length>80?'...':''}</p>
-              <div class="mt-3 flex items-center justify-between">
-                <div class="font-bold text-[var(--primary)]">₹${p.price||0}</div>
-                <div class="flex gap-2">
-                  <button data-id="${id}" class="viewBtn px-3 py-1 border rounded">View</button>
-                  <button data-id="${id}" class="addBtn btn-primary px-3 py-1 rounded">Add</button>
-                </div>
-              </div>
-            `;
-            productsGrid.appendChild(card);
-          }
-        });
-        // reattach handlers
-        document.querySelectorAll('.viewBtn').forEach(b=>b.addEventListener('click', e=> window.location.href = `product.html?id=${e.currentTarget.dataset.id}`));
-        document.querySelectorAll('.addBtn').forEach(b=>b.addEventListener('click', e=> addToCartById(e.currentTarget.dataset.id)));
-      }catch(err){
-        console.error(err);
-        productsGrid.innerHTML = `<p class="text-center text-red-600">Load failed</p>`;
-      }
-    });
-  });
+  function toast(msg){
+    const t = document.createElement('div');
+    t.textContent = msg;
+    t.className = 'fixed bottom-20 right-6 bg-[var(--dark)] text-white px-4 py-2 rounded shadow z-50';
+    document.body.appendChild(t);
+    setTimeout(()=> t.remove(), 2000);
+  }
 
-  // helpers
-  function escapeHtml(s){ if(!s) return ''; return String(s).replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;'); }
-
-  // initial
+  // Initial
   updateCartCount();
   loadProducts();
 
-  // chatbot toggle
-  document.getElementById('chatbotBtn').addEventListener('click', ()=> document.getElementById('chatbotWindow').classList.toggle('hidden'));
-  document.getElementById('closeChat').addEventListener('click', ()=> document.getElementById('chatbotWindow').classList.add('hidden'));
-
+  // Chatbot toggle
+  document.getElementById('chatbotBtn').addEventListener('click', () => document.getElementById('chatbotWindow').classList.toggle('hidden'));
+  document.getElementById('closeChat').addEventListener('click', () => document.getElementById('chatbotWindow').classList.add('hidden'));
 </script>
+<script>
+function getCartCount() {
+    try {
+        const cart = JSON.parse(localStorage.getItem("swadeshi_cart")) || [];
+        return cart.reduce((sum, item) => sum + item.qty, 0);
+    } catch {
+        return 0;
+    }
+}
+
+function updateCartCount() {
+    const el = document.getElementById("cart-count");
+    if (el) el.textContent = getCartCount();
+}
+
+// Update on page load
+document.addEventListener("DOMContentLoaded", updateCartCount);
+
+// Update after each add-to-cart
+document.addEventListener("cart-updated", updateCartCount);
+</script>
+
 
 </body>
 </html>

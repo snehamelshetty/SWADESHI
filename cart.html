@@ -20,7 +20,7 @@
   </nav>
 
   <main class="pt-24 max-w-4xl mx-auto px-6">
-    <h1 class="text-2xl font-semibold mb-4">Your Cart</h1>
+    <h1 class="text-2xl font-semibold mb-4" data-i18n="cart.title">Your Cart</h1>
 
     <div id="cart-wrap" class="bg-white p-6 rounded-xl shadow">
       <p id="emptyMsg" class="text-gray-500">Loading cart...</p>
@@ -34,117 +34,103 @@
             <div id="subtotal" class="text-2xl font-bold text-[var(--primary)]">₹0</div>
           </div>
           <div>
-            <button id="btnCheckout" class="bg-[var(--primary)] text-white px-5 py-3 rounded">Checkout</button>
+            <a href="order-success.html"><button id="btnCheckout" class="bg-[var(--primary)] text-white px-5 py-3 rounded" data-i18n="cart.checkout">Checkout</button></a>
           </div>
         </div>
       </div>
     </div>
   </main>
 
-<script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/9.24.0/firebase-app.js";
-  import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.24.0/firebase-auth.js";
-  import { getFirestore, collection, addDoc } from "https://www.gstatic.com/firebasejs/9.24.0/firebase-firestore.js";
+<script src="translations.js"></script>
+<script src="i18n.js"></script>
 
-  const firebaseConfig = {
-    apiKey: "AIzaSyAs8Ee4DFiPXq3o8UgCgrLFKmLECmxiuyc",
-    authDomain: "swadeshi-b73c1.firebaseapp.com",
-    projectId: "swadeshi-b73c1",
-    storageBucket: "swadeshi-b73c1.appspot.com",
-    messagingSenderId: "976631330768",
-    appId: "1:976631330768:web:addc77ae3062dee1a9abd5"
-  };
-  const app = initializeApp(firebaseConfig);
-  const auth = getAuth(app);
-  const db = getFirestore(app);
+<script>
+/* ---------- CART HELPERS ---------- */
+function getCart(){ 
+    try { return JSON.parse(localStorage.getItem('swadeshi_cart')) || []; } 
+    catch { return []; } 
+}
 
-  const itemsEl = document.getElementById('items');
-  const emptyMsg = document.getElementById('emptyMsg');
-  const checkoutPanel = document.getElementById('checkoutPanel');
-  const subtotalEl = document.getElementById('subtotal');
-  const btnCheckout = document.getElementById('btnCheckout');
+function saveCart(c){ 
+    localStorage.setItem('swadeshi_cart', JSON.stringify(c)); 
+    renderCart(); 
+}
 
-  function getCart(){ try { return JSON.parse(localStorage.getItem('swadeshi_cart')) || []; } catch { return []; } }
-  function saveCart(c){ localStorage.setItem('swadeshi_cart', JSON.stringify(c)); renderCart(); }
-
-  function renderCart(){
+/* ---------- RENDER CART ---------- */
+function renderCart(){
     const cart = getCart();
-    if(!cart.length){ emptyMsg.textContent = 'Your cart is empty.'; itemsEl.innerHTML=''; checkoutPanel.classList.add('hidden'); return; }
+    const itemsEl = document.getElementById("items");
+    const emptyMsg = document.getElementById("emptyMsg");
+    const checkoutPanel = document.getElementById("checkoutPanel");
+    const subtotalEl = document.getElementById("subtotal");
+
+    if(!cart.length){ 
+        emptyMsg.textContent = i18n.t('cart.empty_message'); 
+        itemsEl.innerHTML=''; 
+        checkoutPanel.classList.add('hidden'); 
+        return; 
+    }
+
     emptyMsg.textContent = '';
     itemsEl.innerHTML = '';
+
     let subtotal = 0;
-    cart.forEach((it, idx)=>{
-      subtotal += (it.price||0) * it.qty;
-      const row = document.createElement('div');
-      row.className = 'flex items-center gap-4';
-      row.innerHTML = `
-        <img src="${it.img||'https://via.placeholder.com/100'}" class="w-24 h-20 object-cover rounded">
-        <div class="flex-1">
-          <div class="font-semibold">${it.name}</div>
-          <div class="text-sm text-gray-600">₹${it.price}</div>
-          <div class="mt-2 flex items-center gap-2">
-            <button data-idx="${idx}" class="dec px-2 py-1 border rounded">-</button>
-            <span>${it.qty}</span>
-            <button data-idx="${idx}" class="inc px-2 py-1 border rounded">+</button>
-            <button data-idx="${idx}" class="remove ml-4 text-red-600">Remove</button>
+
+    cart.forEach((item, idx)=>{
+        subtotal += item.price * item.qty;
+
+        itemsEl.innerHTML += `
+          <div class="flex items-center gap-4">
+            <img src="${item.img || 'https://via.placeholder.com/96x80?text=No+Image'}" class="w-24 h-20 object-cover rounded" onerror="this.src='https://via.placeholder.com/96x80?text=No+Image'">
+            <div class="flex-1">
+              <div class="font-semibold">${item.name}</div>
+              <div class="text-sm text-gray-600">₹${item.price}</div>
+
+              <div class="mt-2 flex items-center gap-2">
+                <button class="dec px-2 py-1 border rounded" data-idx="${idx}">-</button>
+                <span>${item.qty}</span>
+                <button class="inc px-2 py-1 border rounded" data-idx="${idx}">+</button>
+                <button class="remove text-red-600 ml-4" data-idx="${idx}">Remove</button>
+              </div>
+            </div>
           </div>
-        </div>
-      `;
-      itemsEl.appendChild(row);
-    });
-    subtotalEl.textContent = '₹' + subtotal;
-    checkoutPanel.classList.remove('hidden');
-
-    // attach handlers
-    document.querySelectorAll('.inc').forEach(b=>b.addEventListener('click', e=>{
-      const i = +e.currentTarget.dataset.idx; const cart = getCart(); cart[i].qty += 1; saveCart(cart);
-    }));
-    document.querySelectorAll('.dec').forEach(b=>b.addEventListener('click', e=>{
-      const i = +e.currentTarget.dataset.idx; const cart = getCart(); if(cart[i].qty>1) cart[i].qty -= 1; else cart.splice(i,1); saveCart(cart);
-    }));
-    document.querySelectorAll('.remove').forEach(b=>b.addEventListener('click', e=>{
-      const i = +e.currentTarget.dataset.idx; const cart = getCart(); cart.splice(i,1); saveCart(cart);
-    }));
-  }
-
-  btnCheckout.addEventListener('click', async ()=>{
-    const cart = getCart();
-    if(!cart.length){ alert('Your cart is empty'); return; }
-
-    // ensure user signed in (checkout requires auth)
-    const user = await new Promise(resolve=>{
-      const unsub = onAuthStateChanged(auth, u=>{ unsub(); resolve(u); });
+        `;
     });
 
-    if(!user){
-      if(confirm('Please login to checkout. Go to login page?')) window.location.href='login.html';
-      return;
-    }
+    subtotalEl.textContent = "₹" + subtotal;
+    checkoutPanel.classList.remove("hidden");
 
-    // build order payload
-    const items = cart.map(i=>({ productId: i.id, name:i.name, qty:i.qty, price:i.price, sellerId: i.sellerId }));
-    const total = items.reduce((s,it)=> s + (it.price||0)*it.qty, 0);
+    /* buttons */
+    document.querySelectorAll(".inc").forEach(btn => {
+        btn.onclick = e => {
+            const i = +e.target.dataset.idx;
+            const cart = getCart();
+            cart[i].qty++;
+            saveCart(cart);
+        };
+    });
 
-    try {
-      const orderDoc = {
-        customerId: user.uid,
-        customerName: user.displayName || user.email || '',
-        items,
-        totalAmount: total,
-        orderStatus: 'Processing',
-        date: new Date().toISOString()
-      };
-      const ref = await addDoc(collection(db,'orders'), orderDoc);
-      localStorage.removeItem('swadeshi_cart'); // clear cart
-      window.location.href = `order-success.html?id=${ref.id}`;
-    } catch(err){
-      console.error('Checkout failed', err);
-      alert('Checkout failed.');
-    }
-  });
+    document.querySelectorAll(".dec").forEach(btn => {
+        btn.onclick = e => {
+            const i = +e.target.dataset.idx;
+            const cart = getCart();
+            if (cart[i].qty > 1) cart[i].qty--;
+            else cart.splice(i,1);
+            saveCart(cart);
+        };
+    });
 
-  // initial render
-  renderCart();
+    document.querySelectorAll(".remove").forEach(btn => {
+        btn.onclick = e => {
+            const i = +e.target.dataset.idx;
+            const cart = getCart();
+            cart.splice(i,1);
+            saveCart(cart);
+        };
+    });
+}
+
+renderCart();
 </script>
 
 </body>

@@ -1,6 +1,6 @@
 // main.js extracted from index.html script
 
-import { initializeApp } from "https://www.gstatic.com/firebasejs/9.24.0/firebase-app.js";
+import { initializeApp, getApps, getApp } from "https://www.gstatic.com/firebasejs/9.24.0/firebase-app.js";
 import { getAuth, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.24.0/firebase-auth.js";
 import { getFirestore, doc, setDoc, collection, addDoc, query, getDocs, orderBy, getDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/9.24.0/firebase-firestore.js";
 import { getStorage, ref as storageRef, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/9.24.0/firebase-storage.js";
@@ -10,18 +10,18 @@ console.log("MAIN JS LOADED ✔");
 // FIREBASE CONFIG
 const firebaseConfig = {
   apiKey: "AIzaSyAs8Ee4DFiPXq3o8UgCgrLFKmLECmxiuyc",
-  authDomain: "swadeshi-b73c1.firebaseapp.com",
+  authDomain: "swadeshi-b73c1.web.app",
   projectId: "swadeshi-b73c1",
   storageBucket: "swadeshi-b73c1.appspot.com",
   messagingSenderId: "976631330768",
   appId: "1:976631330768:web:addc77ae3062dee1a9abd5"
 };
 
-// INIT
-const app = initializeApp(firebaseConfig);
-const auth = getAuth();
-const db = getFirestore();
-const storage = getStorage();
+// INIT (avoid duplicate app if another script already inits)
+const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+const storage = getStorage(app);
 
 // ELEMENTS
 const loginBtn = document.getElementById("login-btn");
@@ -46,17 +46,9 @@ try {
 try {
   document.getElementById("canvas-form").addEventListener("submit", (e) => {
     e.preventDefault();
-    const fileInput = document.getElementById("product-image");
-    const prompt = document.getElementById("design-prompt").value;
-
-    if (!fileInput.files.length) return alert("Upload an image!");
-
-    const reader = new FileReader();
-    reader.onload = (evt) => {
-      document.getElementById("enhanced-image").src = evt.target.result;
-      document.getElementById("canvas-result").classList.remove("hidden");
-    };
-    reader.readAsDataURL(fileInput.files[0]);
+    // If user pressed Enter inside the prompt, trigger the same action as clicking "Generate"
+    const generateBtn = document.getElementById("generate-canvas");
+    if (generateBtn) generateBtn.click();
   });
 
   document.getElementById("sell-from-canvas").onclick = () => {
@@ -67,75 +59,121 @@ try {
 
 // AUTH STATE
 onAuthStateChanged(auth, async (user) => {
-  console.log("Auth state checked");
-
-  if (user) {
-    const userDoc = await getDoc(doc(db, "users", user.uid));
-    if (userDoc.exists()){
-      const role = userDoc.data().role;
-      if(role === "seller"){
-        window.location.href = "seller-dashboard.html";
-        return;
+  const isIndexPage = !window.location.pathname || window.location.pathname.endsWith("index.html") || window.location.pathname.endsWith("/");
+  if (loginBtn) {
+    if (user) {
+      loginBtn.textContent = i18n.t("login.logout");
+      loginBtn.onclick = async () => { await signOut(auth); location.reload(); };
+      const userDoc = await getDoc(doc(db, "users", user.uid));
+      if (userDoc.exists()) {
+        const role = userDoc.data().role;
+        if (role === "seller" && !isIndexPage) {
+          window.location.href = "seller-dashboard.html";
+          return;
+        }
+        if (role === "customer" && !isIndexPage) {
+          window.location.href = "customer-home.html";
+          return;
+        }
       }
+    } else {
+      loginBtn.textContent = i18n.t("login.login");
+      loginBtn.onclick = () => { window.location.href = "login.html"; };
     }
-
-    loginBtn.textContent = "Logout";
-    loginBtn.onclick = async()=>{
-      await signOut(auth);
-      location.reload();
-    };
-
-  } else {
-    loginBtn.textContent = "Login";
-    loginBtn.onclick = ()=> window.location.href = "login.html";
   }
 });
 
-// PRODUCT UPLOAD
+// PRODUCT UPLOAD (index.html Sell Your Products form)
 try {
-  document.getElementById("product-form").addEventListener("submit", async (e) => {
-    e.preventDefault();
+  const productForm = document.getElementById("product-form");
+  if (productForm) {
+    productForm.addEventListener("submit", async (e) => {
+      e.preventDefault();
 
-    const user = auth.currentUser;
-    if(!user) return window.location.href = "login.html";
+      const name = document.getElementById('prod-name')?.value?.trim();
+      const category = document.getElementById('prod-category')?.value?.trim();
+      const desc = document.getElementById('prod-desc')?.value?.trim();
+      const price = Number(document.getElementById('prod-price')?.value);
+      const files = document.getElementById('prod-images')?.files;
 
-    const userDoc = await getDoc(doc(db, "users", user.uid));
-    if(!userDoc.exists() || userDoc.data().role !== "seller"){
-      alert("Only sellers can list products.");
-      return;
-    }
+      if (!name || !category || !desc || !price) {
+        alert(i18n.t("alerts.fill_fields"));
+        return;
+      }
+      if (!files || files.length === 0) {
+        alert(i18n.t("alerts.upload_image"));
+        return;
+      }
 
-    const name = prod-name.value;
-    const category = prod-category.value;
-    const desc = prod-desc.value;
-    const price = Number(prod-price.value);
-    const files = prod-images.files;
+      const listStatus = document.getElementById("list-status");
+      const setStatus = (text, color) => {
+        if (listStatus) { listStatus.textContent = text; listStatus.style.color = color || ''; }
+      };
 
-    const listStatus = document.getElementById("list-status");
-    listStatus.textContent = "Uploading images...";
+      const user = auth.currentUser;
 
-    const urls = [];
-    for(let i=0; i<files.length; i++){
-      const file = files[i];
-      const fileRef = storageRef(storage, `products/${user.uid}/${Date.now()}_${file.name}`);
-      await uploadBytes(fileRef, file);
-      urls.push(await getDownloadURL(fileRef));
-    }
+      if (user) {
+        const userDoc = await getDoc(doc(db, "users", user.uid));
+        if (!userDoc.exists() || userDoc.data().role !== "seller") {
+          alert(i18n.t("alerts.only_sellers"));
+          saveLocalProductAndRedirect(name, category, desc, price, files);
+          return;
+        }
+        setStatus(i18n.t("status.uploading") || "Uploading images...", "blue");
+        const urls = [];
+        for (let i = 0; i < files.length; i++) {
+          const file = files[i];
+          const fileRef = storageRef(storage, `products/${user.uid}/${Date.now()}_${i}_${file.name}`);
+          await uploadBytes(fileRef, file);
+          urls.push(await getDownloadURL(fileRef));
+        }
+        await addDoc(collection(db, "products"), {
+          name,
+          category,
+          desc,
+          price,
+          stock: 10,
+          images: urls,
+          sellerId: user.uid,
+          createdAt: serverTimestamp()
+        });
+        setStatus(i18n.t("status.listed_product"), "green");
+      } else {
+        saveLocalProductAndRedirect(name, category, desc, price, files);
+        return;
+      }
 
-    await addDoc(collection(db, "products"),{
+      setTimeout(() => { window.location.href = "product.html"; }, 1200);
+    });
+  }
+} catch (err) { console.warn("Product form skipped", err); }
+
+function saveLocalProductAndRedirect(name, category, desc, price, files) {
+  const listStatus = document.getElementById("list-status");
+  if (listStatus) {
+    listStatus.textContent = i18n.t("status.saving_locally");
+    listStatus.style.color = "green";
+  }
+  const reader = new FileReader();
+  reader.onload = function () {
+    const img = reader.result;
+    const localProducts = JSON.parse(localStorage.getItem("swadeshi_local_products") || "[]");
+    localProducts.push({
+      id: "local_" + Date.now(),
       name,
       category,
+      description: desc,
       desc,
       price,
-      images: urls,
-      sellerId: user.uid,
-      createdAt: serverTimestamp()
+      stock: 10,
+      sellerId: "local",
+      images: [img]
     });
-
-    listStatus.style.color = "green";
-    listStatus.textContent = "Product listed successfully!";
-  });
-} catch(err){ console.warn("Product form skipped", err); }
+    localStorage.setItem("swadeshi_local_products", JSON.stringify(localProducts));
+    setTimeout(() => { window.location.href = "product.html"; }, 800);
+  };
+  reader.readAsDataURL(files[0]);
+}
 
 // LOAD PRODUCTS
 async function loadFeaturedProducts(){
@@ -162,4 +200,4 @@ async function loadFeaturedProducts(){
   });
 }
 
-loadFeaturedProducts();
+loadFeaturedProducts().then(()=>{ try{ if(window.i18n && window.i18n.applyTranslations) window.i18n.applyTranslations(); }catch(e){} });

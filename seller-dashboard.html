@@ -26,12 +26,12 @@
     <div class="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
       <div class="flex items-center gap-4">
         <a href="index.html" class="text-2xl font-bold text-[var(--primary)]"><span class="text-[var(--accent)]">SWA</span>DESHI</a>
-        <h2 class="text-lg font-semibold text-gray-700">Seller Dashboard</h2>
+        <h2 class="text-lg font-semibold text-gray-700" data-i18n="seller.title">Seller Dashboard</h2>
       </div>
 
       <div class="flex items-center gap-3">
-        <button id="btn-profile" class="px-4 py-2 rounded-full border border-[var(--primary)] text-[var(--primary)]">Profile</button>
-        <a href=index.html><button id="btn-signout" class="px-4 py-2 rounded-full bg-[var(--primary)] text-white">Sign out</button></a>
+        <button id="btn-profile" class="px-4 py-2 rounded-full border border-[var(--primary)] text-[var(--primary)]" data-i18n="seller.profile">Profile</button>
+        <a href=index.html><button id="btn-signout" class="px-4 py-2 rounded-full bg-[var(--primary)] text-white" data-i18n="seller.sign_out">Sign out</button></a>
       </div>
     </div>
   </header>
@@ -49,11 +49,11 @@
         </div>
 
         <nav class="space-y-2">
-          <button data-tab="overview" class="tab-btn w-full text-left px-4 py-3 rounded-lg bg-[var(--accent)] bg-opacity-10 font-semibold">Overview</button>
-          <button data-tab="add" class="tab-btn w-full text-left px-4 py-3 rounded-lg hover:bg-gray-100">Add Product</button>
-          <button data-tab="manage" class="tab-btn w-full text-left px-4 py-3 rounded-lg hover:bg-gray-100">Manage Products</button>
-          <button data-tab="orders" class="tab-btn w-full text-left px-4 py-3 rounded-lg hover:bg-gray-100">Orders</button>
-          <button data-tab="profile" class="tab-btn w-full text-left px-4 py-3 rounded-lg hover:bg-gray-100">Profile</button>
+          <button data-tab="overview" class="tab-btn w-full text-left px-4 py-3 rounded-lg bg-[var(--accent)] bg-opacity-10 font-semibold" data-i18n="seller.overview">Overview</button>
+          <button data-tab="add" class="tab-btn w-full text-left px-4 py-3 rounded-lg hover:bg-gray-100" data-i18n="seller.add">Add Product</button>
+          <button data-tab="manage" class="tab-btn w-full text-left px-4 py-3 rounded-lg hover:bg-gray-100" data-i18n="seller.manage">Manage Products</button>
+          <button data-tab="orders" class="tab-btn w-full text-left px-4 py-3 rounded-lg hover:bg-gray-100" data-i18n="seller.orders">Orders</button>
+          <button data-tab="profile" class="tab-btn w-full text-left px-4 py-3 rounded-lg hover:bg-gray-100" data-i18n="seller.profile">Profile</button>
         </nav>
       </aside>
 
@@ -96,11 +96,119 @@
               <span class="text-sm text-gray-600">Product images (multiple)</span>
               <input id="prodImages" type="file" accept="image/*" multiple class="mt-2" />
             </label>
-            <div class="flex items-center space-x-3">
-              <button id="btn-add-product" class="px-6 py-3 rounded-full bg-[var(--primary)] text-white">Add Product</button>
-              <span id="add-status" class="text-sm text-gray-600"></span>
-            </div>
+
+<!-- ⭐⭐⭐ AI Image Enhancer block ⭐⭐⭐ -->
+<div class="mt-6 p-5 border rounded-xl bg-white shadow space-y-3">
+  <h3 class="text-xl font-semibold">AI Image Enhancer</h3>
+  <p class="text-sm text-gray-600">
+    Upload a product image above, then optionally add instructions (for example:
+    “make colors richer and sharpen details”) and click Enhance.
+  </p>
+
+  <img id="simplePreview" class="w-48 h-48 object-cover rounded border hidden mb-2" />
+
+  <textarea
+    id="simpleEnhancePrompt"
+    class="w-full border rounded-lg p-2 text-sm"
+    rows="2"
+    placeholder="Describe how you want to enhance this photo (optional)"
+  ></textarea>
+
+  <label class="flex items-center gap-2 text-sm text-gray-700">
+    <input id="useAiEnhancer" type="checkbox" class="rounded" />
+    <span>Use AI-powered enhancement (requires backend endpoint).</span>
+  </label>
+  
+  <button
+      id="simpleEnhanceBtn"
+      class="w-full py-3 rounded-lg text-white font-medium mt-1"
+      style="background-color:#A0522D;">
+      Enhance Image
+  </button>
+
+  <p id="simpleEnhanceStatus" class="text-sm text-gray-600"></p>
+
+  <img id="simpleEnhancedImage" class="w-48 h-48 object-cover rounded border hidden mt-2" />
+</div>
+<!-- ⭐⭐⭐ End Enhancer block ⭐⭐⭐ -->
+
+<div class="flex items-center space-x-3 mt-4">
+  <button id="btn-add-product" class="px-6 py-3 rounded-full bg-[var(--primary)] text-white">Add Product</button>
+  <span id="add-status" class="text-sm text-gray-600"></span>
+</div>
           </form>
+          <!-- AI LISTING ASSISTANT -->
+<div class="bg-white shadow-lg rounded-xl p-6 mt-6 border border-gray-200">
+
+    <h2 class="text-xl font-semibold mb-4 text-gray-800">
+        AI Listing Assistant
+    </h2>
+
+    <!-- PRODUCT TITLE -->
+    <label class="font-medium text-gray-700">Product Title</label>
+    <input id="productTitle"
+           class="border p-3 w-full rounded mt-2 mb-4 focus:ring-2 focus:ring-blue-400"
+           placeholder="Enter Product Name (Example: Handmade Jute Bag)">
+
+    <button id="generateAllBtn"
+    class="w-full text-white py-3 rounded-lg font-medium transition hover:opacity-90"
+    style="background-color:#A0522D;">
+    Generate Full AI Listing
+</button>
+
+    <!-- LOADER -->
+    <div id="loadingSpinner" class="hidden text-center mt-4">
+        <div class="animate-spin h-6 w-6 border-4 border-blue-600 border-t-transparent rounded-full mx-auto"></div>
+        <p class="text-gray-600 text-sm mt-2">Generating listing…</p>
+    </div>
+
+    <!-- RESULT SECTIONS -->
+    <div id="aiResults" class="mt-6 hidden space-y-6">
+
+        <!-- DESCRIPTION -->
+        <div>
+            <h3 class="font-semibold text-gray-700 mb-1">Description</h3>
+            <textarea id="aiDescription"
+                class="border p-3 w-full rounded bg-gray-50" rows="4"></textarea>
+        </div>
+
+        <!-- HIGHLIGHTS -->
+        <div>
+            <h3 class="font-semibold text-gray-700 mb-1">Highlights</h3>
+            <textarea id="aiHighlights"
+                class="border p-3 w-full rounded bg-gray-50" rows="3"></textarea>
+        </div>
+
+        <!-- STORY -->
+        <div>
+            <h3 class="font-semibold text-gray-700 mb-1">Artisan Story</h3>
+            <textarea id="aiStory"
+                class="border p-3 w-full rounded bg-gray-50" rows="3"></textarea>
+        </div>
+
+        <!-- PRICE -->
+        <div>
+            <h3 class="font-semibold text-gray-700 mb-1">Suggested Price (INR)</h3>
+            <input id="aiPrice"
+                class="border p-3 w-full rounded bg-gray-50" />
+        </div>
+
+        <!-- CATEGORY -->
+        <div>
+            <h3 class="font-semibold text-gray-700 mb-1">Category</h3>
+            <input id="aiCategory"
+                class="border p-3 w-full rounded bg-gray-50" />
+        </div>
+
+        <!-- TAGS -->
+        <div>
+            <h3 class="font-semibold text-gray-700 mb-1">Tags</h3>
+            <textarea id="aiTags"
+                class="border p-3 w-full rounded bg-gray-50" rows="2"></textarea>
+        </div>
+    </div>
+</div>
+
         </div>
 
         <!-- Manage Products -->
@@ -160,8 +268,17 @@
   </div>
 
   <div id="toast" class="fixed bottom-6 right-6 bg-[var(--dark)] text-white px-4 py-2 rounded-lg hidden z-50"></div>
+<button id="seedDataBtn" 
+        class="hidden bg-red-600 text-white px-4 py-2 rounded">
+  Seed Dummy Data
+</button>
 
   <!-- Load script -->
+  <script src="translations.js"></script>
+  <script src="i18n.js"></script>
   <script type="module" src="seller-dashboard.js"></script>
+  <script type="module" src="firebase.js"></script>
+  <script src="seller-dashboard.js"></script>
+
 </body>
 </html>

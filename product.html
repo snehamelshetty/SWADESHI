@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Product — Swadeshi</title>
+  <title>Products — Swadeshi</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&family=Playfair+Display:wght@400;600&display=swap" rel="stylesheet">
   <style>
@@ -14,99 +14,194 @@
 </head>
 <body class="min-h-screen">
 
-  <nav class="fixed top-0 left-0 right-0 bg-white shadow px-6 py-4 z-40">
+  <nav class="fixed top-0 left-0 right-0 bg-white shadow px-4 py-3 z-40">
     <div class="max-w-6xl mx-auto flex items-center justify-between">
-      <a href="index.html" class="text-2xl font-bold text-[var(--primary)]">SWADESHI</a>
+      <a href="index.html" class="text-xl font-bold text-[var(--primary)]" data-i18n="footer.name">SWADESHI</a>
       <div>
-        <a href="customer-home.html" class="mr-4">Home</a>
-        <a href="cart.html">Cart</a>
+        <a href="index.html" class="mr-4 text-sm" data-i18n="nav.home">Home</a>
+        <a href="cart.html" class="text-sm" data-i18n="cart.title">Cart</a>
       </div>
     </div>
   </nav>
 
-  <main class="pt-24 max-w-6xl mx-auto px-6">
-    <div id="product-wrap" class="bg-white rounded-xl p-6 shadow">
-      <p class="text-center text-gray-500">Loading product…</p>
+  <main class="pt-20 max-w-6xl mx-auto px-4 pb-12">
+    <h1 class="text-3xl font-bold text-[var(--primary)] mb-6 text-center" data-i18n="products.featuredTitle">All Products</h1>
+    <div id="product-wrap" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+      <!-- Products will load here -->
     </div>
   </main>
 
-<script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/9.24.0/firebase-app.js";
-  import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/9.24.0/firebase-firestore.js";
+<script src="translations.js"></script>
+<script src="i18n.js"></script>
 
-  const firebaseConfig = {
-    apiKey: "AIzaSyAs8Ee4DFiPXq3o8UgCgrLFKmLECmxiuyc",
-    authDomain: "swadeshi-b73c1.firebaseapp.com",
-    projectId: "swadeshi-b73c1",
-    storageBucket: "swadeshi-b73c1.appspot.com",
-    messagingSenderId: "976631330768",
-    appId: "1:976631330768:web:addc77ae3062dee1a9abd5"
-  };
-  const app = initializeApp(firebaseConfig);
-  const db = getFirestore(app);
+<script>
+  // Hardcoded products - always displayed
+  const hardcodedProducts = [
+    { id: 1, name: "Handmade Wooden Bowl", description: "A beautiful handcrafted wooden bowl.", price: 499, stock: 12, sellerId: "s1", images: ["https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSrgeVlmrFrUa7Auth_L-kth6gIsCX4K9lwMg&s"] },
+    { id: 2, name: "Organic Cotton Bag", description: "Eco-friendly organic cotton bag.", price: 299, stock: 20, sellerId: "s2", images: ["https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSrhS2bfJ2xnVouMsEMS5SVvKlWvYBaIcGdwg&s"] },
+    { id: 3, name: "Handwoven Scarf", description: "Warm handwoven scarf.", price: 799, stock: 5, sellerId: "s3", images: ["https://shop.gaatha.com/image/catalog/Vankar-Babubhai-Ladhubhai/20_03_2023/06-(7).jpg"] },
+    { id: 4, name: "Ceramic Vase", description: "Elegant ceramic vase for home decor.", price: 1200, stock: 7, sellerId: "s4", images: ["https://www.jiomart.com/images/product/original/rvmxslavhh/artysta-madhubani-series-1-pottery-vase-6-9-inch-black-product-images-orvmxslavhh-p595937294-0-202212012052.jpg?im=Resize=(420,420)"] },
+    { id: 5, name: "Madhubani Painting", description: "Authentic hand-painted Madhubani art from Bihar.", price: 2500, stock: 7, sellerId: "s3", images: ["https://cdn.shopify.com/s/files/1/0582/4007/3878/files/ram-wedding.jpg?v=1635757117"] },
+    { id: 11, name: "Pashmina Stole", description: "Soft Pashmina stole handwoven in Kashmir.", price: 3500, stock: 10, sellerId: "s11", images: ["https://img500.exportersindia.com/product_images/bc-500/dir_106/3158314/pashmina-shawls-1492152238-2808401.jpeg"] },
+    { id: 12, name: "Dhokra Tribal Art Figurine", description: "Unique brass figurine made with Dhokra metal casting technique.", price: 2000, stock: 6, sellerId: "s12", images: ["https://storeassets.im-cdn.com/media-manager/realcraftsdotin/ktyz3zgjRNSpW4WR7cAf_three-dhokra-musicians-realcrafts_0x0_webp.jpg"] },
+    { id: 13, name: "Kalamkari Wall Hanging", description: "Traditional hand-painted Kalamkari textile from Andhra Pradesh.", price: 2200, stock: 8, sellerId: "s13", images: ["https://www.gangesindia.com/cdn/shop/products/45d6526c39f068b704ebaad0619a888e_1024x.jpg?v=1571611560"] },
+  ];
 
-  const wrap = document.getElementById('product-wrap');
+  // Function to render a product card
+  function renderProduct(p, wrap) {
+    const id = p.id || 'unknown';
+    const img = (p.images && p.images.length > 0) ? p.images[0] : 'https://via.placeholder.com/400x300?text=No+Image';
+    const name = (p.name || 'Unnamed Product').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    const description = (p.description || p.desc || 'No description available').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    const price = p.price || 0;
+    const stock = p.stock || 0;
+    const sellerId = p.sellerId || 'unknown';
 
-  function getParam(name){
-    const u = new URL(location.href);
-    return u.searchParams.get(name);
+    const card = document.createElement('div');
+    card.className = 'bg-white rounded-lg p-3 shadow hover:shadow-lg transition';
+    card.innerHTML = `
+      <img src="${img}" class="w-full h-48 object-cover rounded" alt="${name}" onerror="this.src='https://via.placeholder.com/400x300?text=Image+Error'" />
+      <h2 class="text-lg font-bold text-[var(--primary)] mt-2">${name}</h2>
+      <p class="text-gray-600 text-sm mt-1 line-clamp-2">${description}</p>
+      <div class="mt-1">
+        <div class="text-md font-bold text-[var(--primary)]">₹${price}</div>
+        ${stock > 0 ? `<div class="text-xs text-gray-500">Stock: ${stock}</div>` : '<div class="text-xs text-red-500">Out of Stock</div>'}
+      </div>
+      <div class="mt-2 flex gap-2">
+        <button class="addToCart bg-[var(--primary)] text-white px-3 py-1 rounded text-sm hover:opacity-90 transition" data-id="${id}" data-name="${name}" data-price="${price}" data-img="${img}" data-seller="${sellerId}" data-i18n="products.addToCart">Add to Cart</button>
+      </div>
+    `;
+    wrap.appendChild(card);
   }
 
-  async function loadProduct(){
-    const id = getParam('id');
-    if(!id) { wrap.innerHTML = '<p class="text-red-600">No product id provided.</p>'; return; }
-
-    try{
-      const pSnap = await getDoc(doc(db,'products', id));
-      if(!pSnap.exists()){ wrap.innerHTML = '<p class="text-red-600">Product not found.</p>'; return; }
-      const p = pSnap.data();
-      const imgs = p.images && p.images.length ? p.images : ['https://via.placeholder.com/600x400?text=No+Image'];
-
-      wrap.innerHTML = `
-        <div class="grid md:grid-cols-2 gap-6">
-          <div>
-            <img id="mainImg" src="${imgs[0]}" class="w-full h-96 object-cover rounded" />
-            <div class="flex gap-2 mt-3">
-              ${imgs.map((u,i)=>`<img src="${u}" data-index="${i}" class="w-20 h-16 object-cover rounded cursor-pointer border">`).join('')}
-            </div>
-          </div>
-          <div>
-            <h1 class="text-2xl font-bold text-[var(--primary)]">${(p.name||'')}</h1>
-            <p class="text-gray-600 mt-2">${(p.description||'')}</p>
-            <div class="mt-4">
-              <div class="text-2xl font-bold text-[var(--primary)]">₹${p.price}</div>
-              <div class="text-sm text-gray-500">Stock: ${p.stock || 0}</div>
-            </div>
-            <div class="mt-6 flex gap-3">
-              <button id="addToCart" class="bg-[var(--primary)] text-white px-4 py-2 rounded">Add to Cart</button>
-              <a href="cart.html" class="px-4 py-2 border rounded">Go to Cart</a>
-            </div>
-          </div>
-        </div>
-      `;
-
-      // click thumbnails
-      wrap.querySelectorAll('img[data-index]').forEach(img=>{
-        img.addEventListener('click', e=>{
-          document.getElementById('mainImg').src = e.currentTarget.src;
-        });
-      });
-
-      document.getElementById('addToCart').addEventListener('click', async ()=>{
-        const cart = JSON.parse(localStorage.getItem('swadeshi_cart')||'[]');
-        const existing = cart.find(x=>x.id===id);
-        if(existing) existing.qty += 1; else cart.push({ id, name:p.name, price:p.price, qty:1, sellerId:p.sellerId, img: imgs[0] });
+  // Function to attach cart functionality
+  function attachCartHandlers(wrap) {
+    wrap.querySelectorAll('.addToCart').forEach(btn => {
+      btn.addEventListener('click', e => {
+        const id = e.currentTarget.dataset.id;
+        const name = e.currentTarget.dataset.name;
+        const price = parseInt(e.currentTarget.dataset.price);
+        const img = e.currentTarget.dataset.img;
+        const sellerId = e.currentTarget.dataset.seller;
+        
+        const cart = JSON.parse(localStorage.getItem('swadeshi_cart') || '[]');
+        const existing = cart.find(x => x.id === id);
+        
+        if (existing) {
+          existing.qty += 1;
+        } else {
+          cart.push({ id, name, price, qty: 1, sellerId, img });
+        }
+        
         localStorage.setItem('swadeshi_cart', JSON.stringify(cart));
-        alert('Added to cart');
+        alert(i18n.t('alerts.added_to_cart'));
+        
+        // Dispatch event to update cart count if needed
+        document.dispatchEvent(new Event('cart-updated'));
       });
+    });
+  }
 
-    }catch(err){
-      console.error(err);
-      wrap.innerHTML = '<p class="text-red-600">Failed to load product.</p>';
+  function loadProducts() {
+    const wrap = document.getElementById('product-wrap');
+    if (!wrap) {
+      console.error('product-wrap element not found');
+      return;
+    }
+
+    // Clear and render hardcoded products immediately
+    wrap.innerHTML = '';
+    hardcodedProducts.forEach(p => {
+      renderProduct(p, wrap);
+    });
+
+    // Load products listed from index.html (saved locally when not logged in)
+    try {
+      const localProducts = JSON.parse(localStorage.getItem('swadeshi_local_products') || '[]');
+      localProducts.forEach(p => {
+        renderProduct({
+          id: p.id,
+          name: p.name,
+          description: p.description || p.desc,
+          price: p.price,
+          stock: p.stock || 10,
+          sellerId: p.sellerId || 'local',
+          images: p.images || []
+        }, wrap);
+      });
+    } catch (e) { console.warn('Local products load failed', e); }
+
+    // Attach cart handlers
+    attachCartHandlers(wrap);
+
+    // Re-apply translations after DOM insertion
+    if (window.i18n && window.i18n.applyTranslations) window.i18n.applyTranslations();
+
+    // Try to load Firebase products in background (optional)
+    loadFirebaseProducts(wrap);
+  }
+
+  // Optional: Load Firebase products
+  async function loadFirebaseProducts(wrap) {
+    try {
+      const { initializeApp } = await import("https://www.gstatic.com/firebasejs/9.24.0/firebase-app.js");
+      const { getFirestore, collection, query, getDocs, orderBy } = await import("https://www.gstatic.com/firebasejs/9.24.0/firebase-firestore.js");
+
+      const firebaseConfig = {
+        apiKey: "AIzaSyAs8Ee4DFiPXq3o8UgCgrLFKmLECmxiuyc",
+        authDomain: "swadeshi-b73c1.web.app",
+        projectId: "swadeshi-b73c1",
+        storageBucket: "swadeshi-b73c1.appspot.com",
+        messagingSenderId: "976631330768",
+        appId: "1:976631330768:web:addc77ae3062dee1a9abd5"
+      };
+
+      const app = initializeApp(firebaseConfig);
+      const db = getFirestore(app);
+      
+      let q;
+      let snap;
+      try {
+        // Try to order by createdAt if available
+        q = query(collection(db, "products"), orderBy("createdAt", "desc"));
+        snap = await getDocs(q);
+      } catch (orderError) {
+        // If orderBy fails, use simple query
+        console.warn('orderBy failed, using simple query');
+        q = query(collection(db, "products"));
+        snap = await getDocs(q);
+      }
+
+      if (!snap.empty) {
+        snap.forEach(docSnap => {
+          const p = docSnap.data();
+          renderProduct({
+            id: `firebase_${docSnap.id}`,
+            name: p.name,
+            description: p.desc || p.description,
+            price: p.price,
+            stock: p.stock || 10,
+            sellerId: p.sellerId || 'unknown',
+            images: p.images || []
+          }, wrap);
+        });
+        // Re-attach handlers for new products
+        attachCartHandlers(wrap);
+        console.log(`Loaded ${snap.size} Firebase product(s)`);
+      } else {
+        console.log('No Firebase products found');
+      }
+    } catch (err) {
+      console.warn('Firebase products failed to load, showing hardcoded products only:', err);
     }
   }
 
-  loadProduct();
+  // Wait for DOM to be ready
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', loadProducts);
+  } else {
+    loadProducts();
+  }
 </script>
 
 </body>

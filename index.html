@@ -78,20 +78,33 @@
     </a>
 
     <ul class="hidden md:flex space-x-8 text-gray-700 font-semibold">
-        <li><a href="#home" class="nav-link">Home</a></li>
-        <li><a href="#kalakriti" class="nav-link">Kalakriti!</a></li>
-        <li><a href="#canvas" class="nav-link">Canvas</a></li>
-        <li><a href="#categories" class="nav-link">Categories</a></li>
-        <li><a href="#sell" class="nav-link">Sell Products</a></li>
-        <li><a href="#shop" class="nav-link">Shop</a></li>
-        <li><a href="#contact" class="nav-link">Contact Us</a></li>
+        <li><a href="#home" class="nav-link" data-i18n="nav.home">Home</a></li>
+        <li><a href="#kalakriti" class="nav-link" data-i18n="nav.kalakriti">Kalakriti!</a></li>
+        <li><a href="#canvas" class="nav-link" data-i18n="nav.canvas">Canvas</a></li>
+        <li><a href="#categories" class="nav-link" data-i18n="nav.categories">Categories</a></li>
+        <li><a href="#sell" class="nav-link" data-i18n="nav.sell">Sell Products</a></li>
+        <li><a href="#shop" class="nav-link" data-i18n="nav.shop">Shop</a></li>
+        <li><a href="#contact" class="nav-link" data-i18n="nav.contact">Contact Us</a></li>
     </ul>
 
-    <button id="login-btn" class="btn-primary px-4 py-2 rounded-full">Login</button>
+    <button id="login-btn" class="btn-primary px-4 py-2 rounded-full" data-i18n="login.login">Login</button>
+
+    <select id="lang-select" class="ml-4 border rounded p-2 bg-white" aria-label="Language selector">
+        <option value="en">English</option>
+        <option value="hi">हिन्दी</option>
+    </select>
 
     <button id="mobile-menu-btn" class="md:hidden text-[var(--primary-color)]">
         <i class="fas fa-bars fa-lg"></i>
     </button>
+    <a href="cart.html" class="relative ml-4">
+    <i class="fas fa-shopping-cart text-2xl text-[var(--primary-color)]"></i>
+    <span id="cart-count"
+        class="absolute -top-2 -right-2 bg-red-600 text-white text-xs px-2 py-0.5 rounded-full">
+        0
+    </span>
+</a>
+
 </nav>
 
 
@@ -112,11 +125,11 @@
 <!-- HERO SECTION -->
 <section id="home" class="min-h-screen pt-20 hero-pattern flex items-center text-white">
     <div class="container mx-auto px-6 py-20">
-        <h1 class="text-5xl md:text-6xl font-bold mb-6">Empowering Local Artisans</h1>
-        <p class="text-xl mb-8">
+        <h1 class="text-5xl md:text-6xl font-bold mb-6" data-i18n="hero.title">Empowering Local Artisans</h1>
+        <p class="text-xl mb-8" data-i18n="hero.description">
             Discover unique handcrafted treasures that tell stories of tradition and passion.
         </p>
-        <a href="#shop" class="btn-primary px-8 py-3 rounded-full">Shop Now</a>
+        <a href="#shop" class="btn-primary px-8 py-3 rounded-full" data-i18n="hero.cta">Shop Now</a>
     </div>
 </section>
 
@@ -126,8 +139,85 @@
 <!-- I am NOT rewriting because it causes message limit issues -->
 <!-- KEEP YOUR FULL CONTENT FROM YOUR FILE HERE -->
 <!-- Kalakriti! Section --> <section id="kalakriti" class="py-20 bg-[var(--light-color)]"> 
-    <div class="container mx-auto px-6 max-w-7xl"> <h2 class="text-4xl font-bold text-center mb-12 text-[var(--primary-color)] section-title mx-auto">Kalakriti! <span class="text-[var(--accent-color)]">AI Chatbot</span></h2> <div class="max-w-xl mx-auto bg-white rounded-3xl p-12 shadow-lg flex flex-col items-center space-y-8"> <div id="chatbot" class="w-48 h-48 bg-[var(--primary-color)] rounded-full flex items-center justify-center shadow-lg select-none animate-bounce" aria-label="Animated chatbot icon" role="img" tabindex="0"> <i class="fas fa-robot fa-6x text-white"></i> </div> <p class="text-[var(--dark-color)] text-center text-lg max-w-md"> Meet <strong>Kalakriti!</strong> — your friendly AI assistant ready to help artisans and customers alike. Ask questions about products, selling, shipping, and more. </p> <button id="open-chatbot-btn" class="btn-primary px-8 py-3 rounded-full font-semibold hover:shadow-lg transition" aria-label="Open Kalakriti chatbot"> <a href ="kalakritib.html">Chat now</a> </button> </div> </div> </section> <!-- Canvas Section --> <section id="canvas" class="py-20 bg-white"> <div class="container mx-auto px-6 max-w-7xl"> <h2 class="text-4xl font-bold text-center mb-12 text-[var(--primary-color)] section-title mx-auto">Canvas <span class="text-[var(--accent-color)]">AI-Powered Design Tool</span></h2> <form id="canvas-form" class="max-w-3xl mx-auto flex flex-col space-y-6 border border-[var(--primary-color)] rounded-xl p-8" aria-label="Canvas AI design tool form"> <label class="flex flex-col space-y-2 text-[var(--dark-color)] font-semibold"> Upload Product Image <input type="file" id="product-image" accept="image/*" required class="border border-gray-300 rounded-md p-3" aria-label="Upload product image" /> </label> <label class="flex flex-col space-y-2 text-[var(--dark-color)] font-semibold"> Enter Design Prompt <input type="text" id="design-prompt" placeholder="Describe how you want to enhance your product..." required class="border border-gray-300 rounded-md p-3" aria-label="Design prompt" /> </label> <button type="submit" class="btn-primary px-8 py-3 rounded-full font-semibold hover:shadow-lg transition" aria-label="Generate enhanced visual"> Generate </button> </form> <div id="canvas-result" class="mt-8 max-w-3xl mx-auto hidden flex flex-col items-center space-y-4"> <img id="enhanced-image" alt="Enhanced product visual" class="rounded-lg shadow-lg max-w-full max-h-96" /> <button id="sell-from-canvas" class="btn-primary px-8 py-3 rounded-full font-semibold hover:shadow-lg transition" aria-label="Sell enhanced product"> Sell This Product </button> </div> </div> </section> <!-- Categories Showcase Section --> <section id="categories" class="py-20 bg-white"> <div class="container mx-auto px-6"> <h2 class="text-4xl font-bold text-center mb-16 text-[var(--primary-color)] section-title mx-auto">Our Artisan Categories</h2> <div class="grid md:grid-cols-3 gap-12"> <!-- Pottery Card --> <div class="category-card rounded-2xl overflow-hidden shadow-xl fade-in"> <div class="h-64 overflow-hidden"> <img src="https://www.alphonsostories.com/AlphonSoStoriesImages/downloads/Pottery-blog_0011.jpg" alt="Handcrafted pottery with intricate designs and earthy tones" class="w-full h-full object-cover"> </div> <div class="p-6 bg-[var(--primary-color)] text-white"> <h3 class="text-2xl font-bold mb-2">Pottery</h3> <p class="mb-4">Each piece tells a story of ancient techniques passed down through generations.</p> <a href="#pottery-products" class="inline-flex items-center font-semibold"> Explore Collection <i class="fas fa-arrow-right ml-2"></i> </a> </div> </div> <!-- Saree Card --> <div class="category-card rounded-2xl overflow-hidden shadow-xl fade-in delay-1"> <div class="h-64 overflow-hidden"> <img src="https://www.deepam.com/cdn/shop/articles/D216968_1080x_8d6419f4-9e6a-4f99-8a9b-c76bdc4bbe54_900x.webp?v=1707470495" alt="Handwoven silk saree with golden embroidery on a loom" class="w-full h-full object-cover"> </div> <div class="p-6 bg-[var(--secondary-color)] text-white"> <h3 class="text-2xl font-bold mb-2">Silk Sarees</h3> <p class="mb-4">Elegant handwoven sarees that embody centuries of textile heritage.</p> <a href="#saree-products" class="inline-flex items-center font-semibold"> Explore Collection <i class="fas fa-arrow-right ml-2"></i> </a> </div> </div> <!-- Toys Card --> <div class="category-card rounded-2xl overflow-hidden shadow-xl fade-in delay-2"> <div class="h-64 overflow-hidden"> <img src="https://storeassets.im-cdn.com/standalone/767432/eco_friendly_channapatna_wooden_toys_and_dolls_11.webp" alt="Colorful handmade wooden toys arranged artistically" class="w-full h-full object-cover"> </div> <div class="p-6 bg-[var(--accent-color)] text-[var(--dark-color)]"> <h3 class="text-2xl font-bold mb-2">Handmade Toys</h3> <p class="mb-4">Eco-friendly toys crafted with love and care for the next generation.</p> <a href="#toy-products" class="inline-flex items-center font-semibold"> Explore Collection <i class="fas fa-arrow-right ml-2"></i> </a> </div> </div> </div> </div> </section> <!-- Products Section --> <section id="shop" class="py-20 bg-[var(--light-color)]"> <div class="container mx-auto px-6"> <h2 class="text-4xl font-bold text-center mb-16 text-[var(--primary-color)] section-title mx-auto">Featured Products</h2> <div class="grid md:grid-cols-3 gap-8"> <!-- Product 1 --> <div class="product-card rounded-2xl overflow-hidden p-6 fade-in"> <div class="h-56 overflow-hidden rounded-xl mb-4"> <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTSMTPh1vUQafFbX4RXOnNxf339A8xwgq5zZQ&s" alt="Hand-painted blue pottery vase with intricate floral patterns" class="w-full h-full object-cover"> </div> <h3 class="text-xl font-bold mb-2">Blue Pottery Vase</h3> <p class="text-gray-600 mb-4">Hand-painted with traditional motifs, perfect for home decor.</p> <div class="flex justify-between items-center"> <span class="text-[var(--primary-color)] font-bold text-xl">₹1,499</span> <button class="btn-primary px-4 py-2 rounded-full">Add to Cart</button> </div> </div> <!-- Product 2 --> <div class="product-card rounded-2xl overflow-hidden p-6 fade-in delay-1"> <div class="h-56 overflow-hidden rounded-xl mb-4"> <img src="https://www.singhanias.in/cdn/shop/articles/a7c79ac0397619b0c5304d37acef063e.jpg?v=1668085176" alt="Handwoven silk saree with golden border and intricate embroidery" class="w-full h-full object-cover"> </div> <h3 class="text-xl font-bold mb-2">Banarasi Silk Saree</h3> <p class="text-gray-600 mb-4">Elegant handwoven silk with gold zari work.</p> <div class="flex justify-between items-center"> <span class="text-[var(--primary-color)] font-bold text-xl">₹5,999</span> <button class="btn-primary px-4 py-2 rounded-full">Add to Cart</button> </div> </div> <!-- Product 3 --> <div class="product-card rounded-2xl overflow-hidden p-6 fade-in delay-2"> <div class="h-56 overflow-hidden rounded-xl mb-"> <img src="https://i.ebayimg.com/images/g/5gYAAOSwgEhkHDsp/s-l400.jpg" alt="Handcrafted wooden elephant toy with colorful patterns" class="w-full h-full object-cover"> </div> <h3 class="text-xl font-bold mb-2">Wooden Elephant Toy</h3> <p class="text-gray-600 mb-4">Eco-friendly wooden toy with non-toxic colors.</p> <div class="flex justify-between items-center"> <span class="text-[var(--primary-color)] font-bold text-xl">₹799</span> <button class="btn-primary px-4 py-2 rounded-full">Add to Cart</button> </div> </div> </div> </div> </section> <!-- Sell Products Section --> <section id="sell" class="py-20 bg-white"> <div class="container mx-auto px-6 max-w-4xl"> <h2 class="text-4xl font-bold text-center mb-16 text-[var(--primary-color)] section-title mx-auto">Sell Your Products</h2> <form class="bg-[var(--light-color)] p-8 rounded-2xl shadow-lg"> <div class="grid md:grid-cols-2 gap-6"> <div> <label class="block text-[var(--dark-color)] font-semibold mb-2">Product Name</label> <input type="text" class="w-full border border-gray-300 rounded-md p-3" placeholder="Enter product name"> </div> <div> <label class="block text-[var(--dark-color)] font-semibold mb-2">Category</label> <select class="w-full border border-gray-300 rounded-md p-3"> <option>Pottery</option> <option>Saree</option> <option>Toys</option> <option>Other</option> </select> </div> <div class="md:col-span-2"> <label class="block text-[var(--dark-color)] font-semibold mb-2">Description</label> <textarea class="w-full border border-gray-300 rounded-md p-3" rows="3" placeholder="Describe your product"></textarea> </div> <div> <label class="block text-[var(--dark-color)] font-semibold mb-2">Price (₹)</label> <input type="number" class="w-full border border-gray-300 rounded-md p-3" placeholder="Enter price"> </div> <div> <label class="block text-[var(--dark-color)] font-semibold mb-2">Product Images</label> <input type="file" multiple class="w-full border border-gray-300 rounded-md p-3"> </div> </div> <button type="submit" class="btn-primary px-8 py-3 rounded-full font-semibold mt-6">List Product</button> </form> </div> </section> <!-- Contact Us Modal --> <div id="contact-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50" role="dialog" aria-modal="true" aria-labelledby="contact-modal-title"> <div class="bg-white rounded-xl max-w-md w-full p-8 relative shadow-lg"> <h3 id="contact-modal-title" class="text-2xl font-bold mb-6 text-[var(--primary-color)]">Contact Us</h3> <button id="close-contact" class="absolute top-4 right-4 text-gray-600 hover:text-[var(--primary-color)] focus:outline-none" aria-label="Close contact form"> <i class="fas fa-times fa-lg"></i> </button> <form id="contact-form" class="flex flex-col gap-4" aria-label="Contact form"> <input type="text" id="contact-name" placeholder="Your Name" required class="border border-[var(--primary-color)] rounded-md p-3" aria-label="Your name" /> <input type="email" id="contact-email" placeholder="Your Email" required class="border border-[var(--primary-color)] rounded-md p-3" aria-label="Your email" /> <textarea id="contact-message" placeholder="Your Message" rows="4" required class="border border-[var(--primary-color)] rounded-md p-3" aria-label="Your message"></textarea> <button type="submit" class="btn-primary px-8 py-3 rounded-full font-semibold hover:shadow-lg transition" aria-label="Send message"> Send Message </button> </form> </div> </div>
+    <div class="container mx-auto px-6 max-w-7xl"> <h2 class="text-4xl font-bold text-center mb-12 text-[var(--primary-color)] section-title mx-auto">Kalakriti! <span class="text-[var(--accent-color)]">AI Chatbot</span></h2> <div class="max-w-xl mx-auto bg-white rounded-3xl p-12 shadow-lg flex \
+        flex-col items-center space-y-8"> <div id="chatbot" class="w-48 h-48 bg-[var(--primary-color)] rounded-full flex items-center justify-center shadow-lg select-none animate-bounce" aria-label="Animated chatbot icon" role="img" tabindex="0"> <i class="fas fa-robot fa-6x text-white"></i> </div> <p class="text-[var(--dark-color)] text-center text-lg max-w-md" data-i18n="kalakriti.description"> Meet <strong>Kalakriti!</strong> — your friendly AI assistant ready to help artisans and customers alike. Ask questions about products, selling, shipping, and more. </p> <button id="open-chatbot-btn" class="btn-primary px-8 py-3 rounded-full font-semibold hover:shadow-lg transition" aria-label="Open Kalakriti chatbot"> <a href ="kalakritib.html" data-i18n="kalakriti.cta">Chat now</a> </button> </div> </div> </section> <!-- Canvas Section --> <section id="canvas" class="py-20 bg-white"> <div class="container mx-auto px-6 max-w-7xl"> <h2 class="text-4xl font-bold text-center mb-12 text-[var(--primary-color)] section-title mx-auto">Canvas <span class="text-[var(--accent-color)]">AI-Powered Design Tool</span></h2> <form id="canvas-form" class="max-w-3xl mx-auto flex flex-col space-y-6 border border-[var(--primary-color)] rounded-xl p-8" aria-label="Canvas AI design tool form"> <label class="flex flex-col space-y-2 text-[var(--dark-color)] font-semibold" data-i18n="canvas.upload">
+  Upload Product Image
+  <div id="product-dropzone" class="mt-2 border-2 border-dashed border-gray-300 rounded-md p-6 text-center cursor-pointer" aria-label="Drag and drop image here or click choose file">
+    <p id="dropzone-text" class="text-sm text-gray-600">Drag & drop an image here, or</p>
+    <div class="mt-3 flex justify-center gap-3">
+      <button type="button" id="choose-file-btn" class="btn-outline px-4 py-2 rounded">Choose file</button>
+      <button type="button" id="paste-image-btn" class="btn-outline px-4 py-2 rounded">Paste image / URL</button>
+    </div>
 
+    <input type="file" id="product-image" accept="image/*" required class="hidden" aria-label="Upload product image" />
+
+    <div id="image-preview" class="mt-4 hidden">
+      <img id="preview-img" src="#" alt="Selected image preview" class="mx-auto rounded-md shadow-sm max-h-48" />
+      <div class="mt-2 text-sm text-gray-600" id="preview-name"></div>
+      <button type="button" id="remove-preview" class="btn-outline mt-2 px-4 py-1 rounded">Remove</button>
+    </div>
+  </div>
+</label> <label class="flex flex-col space-y-2 text-[var(--dark-color)] font-semibold" data-i18n="canvas.promptLabel"> Enter Design Prompt <input type="text" id="design-prompt" data-i18n-placeholder="canvas.prompt" class="border border-gray-300 rounded-md p-3" aria-label="Design prompt" /> </label> <div class="flex items-center gap-6"> <label class="flex items-center gap-2"><input type="radio" name="canvas-mode" value="local" checked> <span data-i18n="canvas.mode_local">Local Enhance</span></label> <label class="flex items-center gap-2"><input type="radio" name="canvas-mode" value="ai"> <span data-i18n="canvas.mode_ai">AI Generate</span></label> </div> <label class="flex items-center gap-3" title="Strength"> <span data-i18n="canvas.strength">Strength</span> <input type="range" id="canvas-strength" min="0" max="100" value="50" class="w-full" /> </label> <label class="flex items-center gap-2"> <span data-i18n="canvas.style_label">Style</span> <select id="canvas-style" class="border border-gray-300 rounded-md p-2"> <option value="natural" data-i18n="canvas.style_natural">Natural</option> <option value="artistic" data-i18n="canvas.style_artistic">Artistic</option> <option value="vintage" data-i18n="canvas.style_vintage">Vintage</option> </select> </label> <div class="flex gap-3"> <button type="button" id="generate-canvas" class="btn-primary px-8 py-3 rounded-full font-semibold hover:shadow-lg transition" aria-label="Generate enhanced visual"> <span data-i18n="canvas.generate">Generate</span> </button> <button type="button" id="download-canvas" class="btn-outline px-6 py-2 rounded hidden" data-i18n="canvas.download">Download</button> </div> <div id="canvas-status" class="text-sm text-gray-600 mt-2" data-i18n="canvas.idle">Idle</div> </form>
+
+<!-- Paste Image / URL Modal -->
+<div id="paste-image-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50" role="dialog" aria-modal="true" aria-labelledby="paste-modal-title">
+  <div class="bg-white rounded-xl max-w-md w-full p-6 relative shadow-lg">
+    <h3 id="paste-modal-title" class="text-xl font-bold mb-4">Paste Image URL or Upload</h3>
+    <input id="paste-image-url" type="url" placeholder="Paste image URL here" class="w-full border border-gray-300 rounded-md p-3 mb-3" />
+    <div class="text-sm text-gray-600 mb-3">Or paste an image directly (Ctrl+V)</div>
+    <div class="flex gap-3 justify-end">
+      <button id="cancel-paste" type="button" class="btn-outline px-4 py-2 rounded">Cancel</button>
+      <button id="use-url-btn" type="button" class="btn-primary px-4 py-2 rounded">Use URL</button>
+    </div>
+    <button id="close-paste-modal" class="absolute top-3 right-3 text-gray-500">&times;</button>
+  </div>
+</div>
+
+<div id="canvas-result" class="mt-8 max-w-3xl mx-auto hidden flex flex-col items-center space-y-4"> <img id="enhanced-image" alt="Enhanced product visual" class="rounded-lg shadow-lg max-w-full max-h-96" /> <canvas id="processing-canvas" class="hidden"></canvas> <div class="flex gap-2 mt-2"> <button id="sell-from-canvas" class="btn-primary px-8 py-3 rounded-full font-semibold hover:shadow-lg transition" aria-label="Sell enhanced product" data-i18n="canvas.sell">Sell This Product</button> <a id="download-link" href="#" class="hidden" download></a> </div> </div> </div> </section>  <!-- Categories Showcase Section --> <section id="categories" class="py-20 bg-white"> <div class="container mx-auto px-6"> <h2 class="text-4xl font-bold text-center mb-16 text-[var(--primary-color)] section-title mx-auto">Our Artisan Categories</h2> <div class="grid md:grid-cols-3 gap-12"> <!-- Pottery Card --> <div class="category-card rounded-2xl overflow-hidden shadow-xl fade-in"> <div class="h-64 overflow-hidden"> <img src="https://www.alphonsostories.com/AlphonSoStoriesImages/downloads/Pottery-blog_0011.jpg" alt="Handcrafted pottery with intricate designs and earthy tones" class="w-full h-full object-cover"> </div> <div class="p-6 bg-[var(--primary-color)] text-white"> <h3 class="text-2xl font-bold mb-2">Pottery</h3> <p class="mb-4">Each piece tells a story of ancient techniques passed down through generations.</p> <a href="#pottery-products" class="inline-flex items-center font-semibold"> Explore Collection <i class="fas fa-arrow-right ml-2"></i> </a> </div> </div> <!-- Saree Card --> <div class="category-card rounded-2xl overflow-hidden shadow-xl fade-in delay-1"> <div class="h-64 overflow-hidden"> <img src="https://www.deepam.com/cdn/shop/articles/D216968_1080x_8d6419f4-9e6a-4f99-8a9b-c76bdc4bbe54_900x.webp?v=1707470495" alt="Handwoven silk saree with golden embroidery on a loom" class="w-full h-full object-cover"> </div> <div class="p-6 bg-[var(--secondary-color)] text-white"> <h3 class="text-2xl font-bold mb-2">Silk Sarees</h3> <p class="mb-4">Elegant handwoven sarees that embody centuries of textile heritage.</p> <a href="#saree-products" class="inline-flex items-center font-semibold"> Explore Collection <i class="fas fa-arrow-right ml-2"></i> </a> </div> </div> <!-- Toys Card --> <div class="category-card rounded-2xl overflow-hidden shadow-xl fade-in delay-2"> <div class="h-64 overflow-hidden"> <img src="https://storeassets.im-cdn.com/standalone/767432/eco_friendly_channapatna_wooden_toys_and_dolls_11.webp" alt="Colorful handmade wooden toys arranged artistically" class="w-full h-full object-cover"> </div> <div class="p-6 bg-[var(--accent-color)] text-[var(--dark-color)]"> <h3 class="text-2xl font-bold mb-2">Handmade Toys</h3> <p class="mb-4">Eco-friendly toys crafted with love and care for the next generation.</p> <a href="#toy-products" class="inline-flex items-center font-semibold"> Explore Collection <i class="fas fa-arrow-right ml-2"></i> </a> </div> </div> </div> </div> </section> <!-- Products Section --> <section id="shop" class="py-20 bg-[var(--light-color)]"> <div class="container mx-auto px-6"> 
+        <h2 class="text-4xl font-bold text-center mb-16 text-[var(--primary-color)] section-title mx-auto">Featured Products</h2> 
+        <div class="grid md:grid-cols-3 gap-8"> <!-- Product 1 --> <div class="product-card rounded-2xl overflow-hidden p-6 fade-in"> <div class="h-56 overflow-hidden rounded-xl mb-4"> <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTSMTPh1vUQafFbX4RXOnNxf339A8xwgq5zZQ&s" alt="Hand-painted blue pottery vase with intricate floral patterns" class="w-full h-full object-cover"> </div> <h3 class="text-xl font-bold mb-2">Blue Pottery Vase</h3> <p class="text-gray-600 mb-4">Hand-painted with traditional motifs, perfect for home decor.</p> <div class="flex justify-between items-center"> <span class="text-[var(--primary-color)] font-bold text-xl">₹1,499</span> <button class="btn-primary px-4 py-2 rounded-full" data-i18n="products.addToCart">Add to Cart</button> </div> 
+    </div> <!-- Product 2 -->  <div class="product-card rounded-2xl overflow-hidden p-6 fade-in"> <div class="h-56 overflow-hidden rounded-xl mb-4"> <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRdPb8bEz2vQchlXVQ6ImpJkP9Hn_WFNr2WCw&s" alt="Pure Mysore Silk Saree" class="w-full h-full object-cover"> </div> <h3 class="text-xl font-bold mb-2">Mysore Silk Saree</h3> <p class="text-gray-600 mb-4">Elegant handwoven silk saree</p> <div class="flex justify-between items-center"> <span class="text-[var(--primary-color)] font-bold text-xl">₹20,499</span> <button class="btn-primary px-4 py-2 rounded-full" data-i18n="products.addToCart">Add to Cart</button> </div> 
+    </div><!--product2i--><div class="product-card rounded-2xl overflow-hidden p-6 fade-in"> <div class="h-56 overflow-hidden rounded-xl mb-4"> <img src="https://images.jdmagicbox.com/v2/comp/def_content/ncat_id/wooden-toy-qjh8714-250.jpg" alt="wood toys" class="w-full h-full object-cover"> </div> <h3 class="text-xl font-bold mb-2">Channapatna Toys</h3> <p class="text-gray-600 mb-4">Handcrafted and eco-friendly wooden toys</p> <div class="flex justify-between items-center"> <span class="text-[var(--primary-color)] font-bold text-xl">₹199</span> <button class="btn-primary px-4 py-2 rounded-full" data-i18n="products.addToCart">Add to Cart</button> </div> 
+    </div><!--product 3--> <div class="product-card rounded-2xl overflow-hidden p-6 fade-in delay-1"> <div class="h-56 overflow-hidden rounded-xl mb-4"> <img src="https://hmrhandlooms.com/cdn/shop/files/D94A32BC-36D2-4F97-8759-1D58C541C826.jpg?v=1761219716" alt="Handwoven silk saree with golden border and intricate embroidery" class="w-full h-full object-cover"> </div> <h3 class="text-xl font-bold mb-2">Banarasi Silk Saree</h3> <p class="text-gray-600 mb-4">Elegant handwoven silk with gold zari work.</p> <div class="flex justify-between items-center"> <span class="text-[var(--primary-color)] font-bold text-xl">₹5,999</span> <button class="btn-primary px-4 py-2 rounded-full" data-i18n="products.addToCart">Add to Cart</button> </div> </div> <!-- Product 3 --> <div class="product-card rounded-2xl overflow-hidden p-6 fade-in delay-2"> <div class="h-56 overflow-hidden rounded-xl mb-"> <img src="https://i.ebayimg.com/images/g/5gYAAOSwgEhkHDsp/s-l400.jpg" alt="Handcrafted wooden elephant toy with colorful patterns" class="w-full h-full object-cover"> </div> <h3 class="text-xl font-bold mb-2">Wooden Elephant Toy</h3> <p class="text-gray-600 mb-4">Eco-friendly wooden toy with non-toxic colors.</p> <div class="flex justify-between items-center"> <span class="text-[var(--primary-color)] font-bold text-xl">₹799</span> <button class="btn-primary px-4 py-2 rounded-full" data-i18n="products.addToCart">Add to Cart</button> </div> </div> </div> </div> </section> <!-- Sell Products Section --> <section id="sell" class="py-20 bg-white"> <div class="container mx-auto px-6 max-w-4xl"> <h2 class="text-4xl font-bold text-center mb-16 text-[var(--primary-color)] section-title mx-auto" data-i18n="sell.title">Sell Your Products</h2> <form id="product-form" class="bg-[var(--light-color)] p-8 rounded-2xl shadow-lg"> <div class="grid md:grid-cols-2 gap-6"> <div> <label class="block text-[var(--dark-color)] font-semibold mb-2" data-i18n="sell.name">Product Name</label> <input id="prod-name" type="text" class="w-full border border-gray-300 rounded-md p-3" placeholder="Enter product name" data-i18n-placeholder="sell.name" required> </div> <div> <label class="block text-[var(--dark-color)] font-semibold mb-2" data-i18n="sell.category">Category</label> <select id="prod-category" class="w-full border border-gray-300 rounded-md p-3" required> <option value="">Select Category</option> <option>Pottery</option> <option>Saree</option> <option>Toys</option> <option>Other</option> </select> </div> <div class="md:col-span-2"> <label class="block text-[var(--dark-color)] font-semibold mb-2">Description</label> <textarea id="prod-desc" class="w-full border border-gray-300 rounded-md p-3" rows="3" placeholder="Describe your product" required></textarea> </div> <div> <label class="block text-[var(--dark-color)] font-semibold mb-2">Price (₹)</label> <input id="prod-price" type="number" class="w-full border border-gray-300 rounded-md p-3" placeholder="Enter price" required> </div> <div> <label class="block text-[var(--dark-color)] font-semibold mb-2">Product Images</label> <input id="prod-images" type="file" accept="image/*" multiple class="w-full border border-gray-300 rounded-md p-3" required> </div> </div> <div class="mt-4"> <span id="list-status" class="text-sm text-gray-600"></span> </div> <button type="submit" class="btn-primary px-8 py-3 rounded-full font-semibold mt-6" data-i18n="sell.list">List Product</button> </form> </div> </section> <!-- Contact Us Modal --> <div id="contact-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50" role="dialog" aria-modal="true" aria-labelledby="contact-modal-title"> <div class="bg-white rounded-xl max-w-md w-full p-8 relative shadow-lg"> <h3 id="contact-modal-title" class="text-2xl font-bold mb-6 text-[var(--primary-color)]" data-i18n="contact.title">Contact Us</h3> <button id="close-contact" class="absolute top-4 right-4 text-gray-600 hover:text-[var(--primary-color)] focus:outline-none" aria-label="Close contact form"> <i class="fas fa-times fa-lg"></i> </button> <form id="contact-form" class="flex flex-col gap-4" aria-label="Contact form"> <input type="text" id="contact-name" placeholder="Your Name" data-i18n-placeholder="contact.name" required class="border border-[var(--primary-color)] rounded-md p-3" aria-label="Your name" /> <input type="email" id="contact-email" placeholder="Your Email" data-i18n-placeholder="contact.email" required class="border border-[var(--primary-color)] rounded-md p-3" aria-label="Your email" /> <textarea id="contact-message" placeholder="Your Message" data-i18n-placeholder="contact.message" rows="4" required class="border border-[var(--primary-color)] rounded-md p-3" aria-label="Your message"></textarea> <button type="submit" class="btn-primary px-8 py-3 rounded-full font-semibold hover:shadow-lg transition" aria-label="Send message" data-i18n="contact.send"> Send Message </button> </form> </div> </div>
+
+
+    <!-- Footer -->
+    <footer class="bg-[var(--dark-color)] text-white py-12">
+        <div class="container mx-auto px-6">
+            <div class="grid md:grid-cols-4 gap-8">
+                <div>
+                    <h3 class="text-2xl font-bold mb-4 text-[var(--accent-color)]" data-i18n="footer.name">Swadeshi</h3>
+                    <p data-i18n="footer.tagline">Empowering local artisans to showcase and sell their unique handmade products.</p>
+                </div>
+                <div>
+                    <h4 class="text-lg font-semibold mb-4">Quick Links</h4>
+                    <ul class="space-y-2">
+                        <li><a href="#home" class="hover:text-[var(--accent-color)]">Home</a></li>
+                        <li><a href="#shop" class="hover:text-[var(--accent-color)]">Shop</a></li>
+                        <li><a href="#sell" class="hover:text-[var(--accent-color)]">Sell Products</a></li>
+                        <li><a href="#contact" class="hover:text-[var(--accent-color)]">Contact Us</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h4 class="text-lg font-semibold mb-4">Categories</h4>
+                    <ul class="space-y-2">
+                        <li><a href="#pottery" class="hover:text-[var(--accent-color)]">Pottery</a></li>
+                        <li><a href="#saree" class="hover:text-[var(--accent-color)]">Silk Sarees</a></li>
+                        <li><a href="#toys" class="hover:text-[var(--accent-color)]">Handmade Toys</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h4 class="text-lg font-semibold mb-4">Contact Info</h4>
+                    <p class="mb-2">Email: swadeshi@gmail.com</p>
+                    <p class="mb-2">Instagram: @Swadeshi</p>
+                    <p>Phone: +91 2345678907</p>
+                </div>
+            </div>
+            <div class="border-t border-gray-600 mt-8 pt-8 text-center">
+                <p>&copy; 2024 Swadeshi. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
 <!-- FIREBASE LOGIN / REDIRECT SYSTEM -->
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
@@ -168,7 +258,94 @@ onAuthStateChanged(auth, async (user) => {
 </script>
 
 <script src="https://unpkg.com/lenis@1.3.11/dist/lenis.min.js"></script>
+<script src="translations.js"></script>
+<script src="i18n.js"></script>
+<script src="canvas.js"></script>
 <script src="script.js"></script>
+<script type="module" src="main.js"></script>
+<script>
+/* --------------------------
+    CART UTIL FUNCTIONS
+---------------------------*/
+function getCart() {
+    try {
+        return JSON.parse(localStorage.getItem("swadeshi_cart")) || [];
+    } catch {
+        return [];
+    }
+}
+
+function saveCart(cart) {
+    localStorage.setItem("swadeshi_cart", JSON.stringify(cart));
+}
+
+/* --------------------------
+   ADD TO CART LOGIC
+---------------------------*/
+document.addEventListener("DOMContentLoaded", () => {
+
+    const products = document.querySelectorAll("#shop .product-card");
+
+    products.forEach((card, index) => {
+
+        const btn = card.querySelector("button");
+        const name = card.querySelector("h3").innerText.trim();
+        const priceText = card.querySelector("span").innerText.replace("₹", "").trim();
+        const img = card.querySelector("img").src;
+
+        const price = parseInt(priceText);
+        const id = "prod_" + (index + 1); // unique product id
+        const sellerId = "seller_default"; // update later when sellers upload
+
+        btn.addEventListener("click", () => {
+            let cart = getCart();
+
+            // check if product exists
+            let existing = cart.find(item => item.id === id);
+
+            if (existing) {
+                existing.qty += 1;
+            } else {
+                cart.push({
+                    id,
+                    name,
+                    price,
+                    img,
+                    qty: 1,
+                    sellerId
+                });
+            }
+saveCart(cart);
+document.dispatchEvent(new Event("cart-updated"));
+alert(i18n.t("alerts.added_to_cart"));
+
+        });
+    });
+
+});
+</script>
+<script>
+function getCartCount() {
+    try {
+        const cart = JSON.parse(localStorage.getItem("swadeshi_cart")) || [];
+        return cart.reduce((sum, item) => sum + item.qty, 0);
+    } catch {
+        return 0;
+    }
+}
+
+function updateCartCount() {
+    const el = document.getElementById("cart-count");
+    if (el) el.textContent = getCartCount();
+}
+
+// Update on page load
+document.addEventListener("DOMContentLoaded", updateCartCount);
+
+// Update after each add-to-cart
+document.addEventListener("cart-updated", updateCartCount);
+</script>
+
 
 </body>
 </html>
